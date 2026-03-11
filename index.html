@@ -1,590 +1,289 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Career Copilot — For Indian Freshers</title>
-    <meta
-      name="description"
-      content="AI-powered resume analyzer, JD matcher & mock interview for Indian PM, BA, SDE, Data Science, SEO freshers. 100% free & private."
-    />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Career Copilot — For Indian Freshers</title>
+  <meta name="description"
+    content="AI-powered resume analyzer, JD matcher & mock interview for Indian PM, BA, SDE, Data Science, SEO freshers. 100% free & private." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 
-    <!-- Styles — order matters (cascade) -->
-    <link rel="stylesheet" href="src/styles/variables.css" />
-    <link rel="stylesheet" href="src/styles/base.css" />
-    <link rel="stylesheet" href="src/styles/components.css" />
-    <link rel="stylesheet" href="src/styles/layout.css" />
-  </head>
-  <body>
-    <!-- ── API KEY SETUP MODAL ───────────────────────────────────────────────── -->
-    <div class="overlay overlay--hidden" id="setup-overlay">
-      <div class="modal">
-        <div class="modal__icon">🔑</div>
-        <h2 class="modal__title">Groq API Key Setup</h2>
-        <p class="modal__desc">
-          Yeh app <strong>Groq ka free AI</strong> use karta hai — blazing fast,
-          koi cost nahi. Ek baar key set karo, phir hamesha kaam karega.
-        </p>
-        <div class="modal__steps">
-          <strong
-            style="
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <!-- Styles — order matters (cascade) -->
+  <link rel="stylesheet" href="src/styles/variables.css" />
+  <link rel="stylesheet" href="src/styles/base.css" />
+  <link rel="stylesheet" href="src/styles/components.css" />
+  <link rel="stylesheet" href="src/styles/layout.css" />
+</head>
+
+<body>
+  <!-- ── API KEY SETUP MODAL ───────────────────────────────────────────────── -->
+  <div class="overlay overlay--hidden" id="setup-overlay">
+    <div class="modal">
+      <div class="modal__icon">🔑</div>
+      <h2 class="modal__title">Groq API Key Setup</h2>
+      <p class="modal__desc">
+        Yeh app <strong>Groq ka free AI</strong> use karta hai — blazing fast,
+        koi cost nahi. Ek baar key set karo, phir hamesha kaam karega.
+      </p>
+      <div class="modal__steps">
+        <strong style="
               font-size: 11px;
               font-weight: 700;
               color: var(--color-text-primary);
               letter-spacing: 0.4px;
               text-transform: uppercase;
-            "
-            >Steps:</strong
-          >
-          <ol style="margin-top: 8px">
-            <li>
-              Jao
-              <a href="https://console.groq.com" target="_blank" rel="noopener"
-                >console.groq.com</a
-              >
-            </li>
-            <li>Free account banao (Google se login kar sakte ho)</li>
-            <li><strong>API Keys</strong> section mein jao</li>
-            <li><strong>Create API Key</strong> click karo</li>
-            <li>Key copy karke neeche paste karo</li>
-          </ol>
-        </div>
-        <div class="field" style="margin-bottom: var(--space-4)">
-          <label class="field__label">Groq API Key</label>
-          <input
-            class="field__input"
-            type="password"
-            id="api-key-input"
-            placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx"
-          />
-        </div>
-        <button class="btn btn--primary btn--full" id="save-api-btn">
-          Save &amp; Start Using →
-        </button>
-        <p class="modal__note">
-          🔒 Key sirf tere browser mein save hogi — koi server pe nahi jaati
-        </p>
+            ">Steps:</strong>
+        <ol style="margin-top: 8px">
+          <li>
+            Jao
+            <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>
+          </li>
+          <li>Free account banao (Google se login kar sakte ho)</li>
+          <li><strong>API Keys</strong> section mein jao</li>
+          <li><strong>Create API Key</strong> click karo</li>
+          <li>Key copy karke neeche paste karo</li>
+        </ol>
       </div>
+      <div class="field" style="margin-bottom: var(--space-4)">
+        <label class="field__label">Groq API Key</label>
+        <input class="field__input" type="password" id="api-key-input" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx" />
+      </div>
+      <button class="btn btn--primary btn--full" id="save-api-btn">
+        Save &amp; Start Using →
+      </button>
+      <p class="modal__note">
+        🔒 Key sirf tere browser mein save hogi — koi server pe nahi jaati
+      </p>
+    </div>
+  </div>
+
+  <!-- ── TOPBAR ────────────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
+    <a class="topbar__logo" href="#" data-panel="home">
+      <img src="favicon.svg" style="width:22px;height:22px;" alt="logo" />
+      Career Copilot
+    </a>
+
+    <div class="topbar__status">
+      <div class="topbar__status-dot" id="api-dot"></div>
+      <span id="api-status">API not connected</span>
     </div>
 
-    <!-- ── TOPBAR ────────────────────────────────────────────────────────────── -->
-    <header class="topbar">
-      <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
-      <a class="topbar__logo" href="#" data-panel="home">
-        <img src="favicon.svg" style="width:22px;height:22px;" alt="logo"/>
-        Career Copilot
-      </a>
+    <span class="topbar__badge">🇮🇳 Made for Indian Freshers</span>
+    <button class="btn btn--secondary btn--sm" data-action="show-setup">
+      Change API Key
+    </button>
+  </header>
 
-      <div class="topbar__status">
-        <div class="topbar__status-dot" id="api-dot"></div>
-        <span id="api-status">API not connected</span>
+  <!-- ── APP SHELL ─────────────────────────────────────────────────────────── -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <p class="sidebar__section-label">Tools</p>
+
+      <div class="nav-item nav-item--active" id="nav-home" data-panel="home">
+        <span class="nav-item__icon">🏠</span> Home
+      </div>
+      <div class="nav-item" id="nav-resume" data-panel="resume">
+        <span class="nav-item__icon">📄</span> Resume Analyzer
+      </div>
+      <div class="nav-item" id="nav-jd" data-panel="jd">
+        <span class="nav-item__icon">🎯</span> JD Matcher
+      </div>
+      <div class="nav-item" id="nav-interview" data-panel="interview">
+        <span class="nav-item__icon">🎤</span> Mock Interview
       </div>
 
-      <span class="topbar__badge">🇮🇳 Made for Indian Freshers</span>
-      <button class="btn btn--secondary btn--sm" data-action="show-setup">
-        Change API Key
-      </button>
-    </header>
+      <div class="sidebar__divider"></div>
+      <p class="sidebar__section-label">Settings</p>
 
-    <!-- ── APP SHELL ─────────────────────────────────────────────────────────── -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-  <div class="app">
-      <!-- SIDEBAR -->
-      <nav class="sidebar">
-        <p class="sidebar__section-label">Tools</p>
+      <div class="nav-item" data-action="show-setup">
+        <span class="nav-item__icon">🔑</span> API Key
+      </div>
 
-        <div class="nav-item nav-item--active" id="nav-home" data-panel="home">
-          <span class="nav-item__icon">🏠</span> Home
-        </div>
-        <div class="nav-item" id="nav-resume" data-panel="resume">
-          <span class="nav-item__icon">📄</span> Resume Analyzer
-        </div>
-        <div class="nav-item" id="nav-jd" data-panel="jd">
-          <span class="nav-item__icon">🎯</span> JD Matcher
-        </div>
-        <div class="nav-item" id="nav-interview" data-panel="interview">
-          <span class="nav-item__icon">🎤</span> Mock Interview
-        </div>
+      <div class="nav-item" id="nav-history" data-panel="history">
+        <span class="nav-item__icon">📜</span> Interview History
+      </div>
 
-        <div class="sidebar__divider"></div>
-        <p class="sidebar__section-label">Settings</p>
+      <div class="sidebar__api-card hidden" id="sidebar-api-card">
+        <strong>⚠️ API Key Missing</strong>
+        Groq key set karo tools use karne ke liye.
+      </div>
+    </nav>
 
-        <div class="nav-item" data-action="show-setup">
-          <span class="nav-item__icon">🔑</span> API Key
-        </div>
-
-        <div class="nav-item" id="nav-history" data-panel="history">
-          <span class="nav-item__icon">📜</span> Interview History
-        </div>
-
-        <div class="sidebar__api-card hidden" id="sidebar-api-card">
-          <strong>⚠️ API Key Missing</strong>
-          Groq key set karo tools use karne ke liye.
-        </div>
-      </nav>
-
-      <!-- MAIN CONTENT -->
-      <main class="main">
-        <!-- ── HOME ──────────────────────────────────────────────────────── -->
-        <section class="panel panel--active" id="panel-home">
-          <div class="hero">
-            <div class="hero__eyebrow">✦ Free · Private · AI-Powered</div>
-            <h1 class="hero__title">
-              Your <span class="hero__title-gradient">Career Copilot</span
-              ><br />
-              for Every Role
-            </h1>
-            <p class="hero__sub">
-              Resume analyze karo, JD match karo, aur real mock interview practice karo. PM, BA, SDE, Data Science, SEO — sab ke liye. Free — powered by Groq AI.
-            </p>
-            <div class="hero__stats">
-              <div class="hero__stat">
-                <div class="hero__stat-num">3</div>
-                <div class="hero__stat-lbl">AI Tools</div>
-              </div>
-              <div class="hero__stat">
-                <div class="hero__stat-num">0₹</div>
-                <div class="hero__stat-lbl">Forever Free</div>
-              </div>
-              <div class="hero__stat">
-                <div class="hero__stat-num">~2s</div>
-                <div class="hero__stat-lbl">Response Time</div>
-              </div>
-              <div class="hero__stat">
-                <div class="hero__stat-num">100%</div>
-                <div class="hero__stat-lbl">Private</div>
-              </div>
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <!-- ── HOME ──────────────────────────────────────────────────────── -->
+      <section class="panel panel--active" id="panel-home">
+        <div class="hero">
+          <div class="hero__eyebrow">✦ Free · Private · AI-Powered</div>
+          <h1 class="hero__title">
+            Your <span class="hero__title-gradient">Career Copilot</span><br />
+            for Every Role
+          </h1>
+          <p class="hero__sub">
+            Resume analyze karo, JD match karo, aur real mock interview practice karo. PM, BA, SDE, Data Science, SEO —
+            sab ke liye. Free — powered by Groq AI.
+          </p>
+          <div class="hero__stats">
+            <div class="hero__stat">
+              <div class="hero__stat-num">3</div>
+              <div class="hero__stat-lbl">AI Tools</div>
+            </div>
+            <div class="hero__stat">
+              <div class="hero__stat-num">0₹</div>
+              <div class="hero__stat-lbl">Forever Free</div>
+            </div>
+            <div class="hero__stat">
+              <div class="hero__stat-num">~2s</div>
+              <div class="hero__stat-lbl">Response Time</div>
+            </div>
+            <div class="hero__stat">
+              <div class="hero__stat-num">100%</div>
+              <div class="hero__stat-lbl">Private</div>
             </div>
           </div>
+        </div>
 
-          <div class="grid-2">
-            <div class="card card--clickable" data-panel="resume">
-              <div class="card__body">
-                <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                  📄
-                </div>
-                <div class="card__title" style="margin-bottom: var(--space-2)">
-                  Resume Analyzer
-                </div>
-                <p
-                  style="
+        <div class="grid-2">
+          <div class="card card--clickable" data-panel="resume">
+            <div class="card__body">
+              <div style="font-size: 28px; margin-bottom: var(--space-3)">
+                📄
+              </div>
+              <div class="card__title" style="margin-bottom: var(--space-2)">
+                Resume Analyzer
+              </div>
+              <p style="
                     font-size: var(--text-sm);
                     color: var(--color-text-muted);
                     line-height: 1.5;
                     margin: 0;
-                  "
-                >
-                  ATS score, PM/BA rewrite, aur actionable improvements.
-                </p>
-                <div style="margin-top: var(--space-4)">
-                  <span class="tag tag--blue">Most Used</span>
-                </div>
+                  ">
+                ATS score, PM/BA rewrite, aur actionable improvements.
+              </p>
+              <div style="margin-top: var(--space-4)">
+                <span class="tag tag--blue">Most Used</span>
               </div>
             </div>
-            <div class="card card--clickable" data-panel="jd">
-              <div class="card__body">
-                <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                  🎯
-                </div>
-                <div class="card__title" style="margin-bottom: var(--space-2)">
-                  JD Matcher
-                </div>
-                <p
-                  style="
+          </div>
+          <div class="card card--clickable" data-panel="jd">
+            <div class="card__body">
+              <div style="font-size: 28px; margin-bottom: var(--space-3)">
+                🎯
+              </div>
+              <div class="card__title" style="margin-bottom: var(--space-2)">
+                JD Matcher
+              </div>
+              <p style="
                     font-size: var(--text-sm);
                     color: var(--color-text-muted);
                     line-height: 1.5;
                     margin: 0;
-                  "
-                >
-                  JD paste karo — exact gaps aur corrections pao.
-                </p>
-                <div style="margin-top: var(--space-4)">
-                  <span class="tag tag--green">High Impact</span>
-                </div>
+                  ">
+                JD paste karo — exact gaps aur corrections pao.
+              </p>
+              <div style="margin-top: var(--space-4)">
+                <span class="tag tag--green">High Impact</span>
               </div>
             </div>
-            <div class="card card--clickable" data-panel="interview">
-              <div class="card__body">
-                <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                  🎤
-                </div>
-                <div class="card__title" style="margin-bottom: var(--space-2)">
-                  Mock Interview
-                </div>
-                <p
-                  style="
+          </div>
+          <div class="card card--clickable" data-panel="interview">
+            <div class="card__body">
+              <div style="font-size: 28px; margin-bottom: var(--space-3)">
+                🎤
+              </div>
+              <div class="card__title" style="margin-bottom: var(--space-2)">
+                Mock Interview
+              </div>
+              <p style="
                     font-size: var(--text-sm);
                     color: var(--color-text-muted);
                     line-height: 1.5;
                     margin: 0;
-                  "
-                >
-                  Real questions, apna jawab likho, detailed feedback pao.
-                </p>
-                <div style="margin-top: var(--space-4)">
-                  <span class="tag tag--yellow">Interactive</span>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card__body">
-                <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                  🔒
-                </div>
-                <div class="card__title" style="margin-bottom: var(--space-2)">
-                  100% Private
-                </div>
-                <p
-                  style="
-                    font-size: var(--text-sm);
-                    color: var(--color-text-muted);
-                    line-height: 1.5;
-                    margin: 0;
-                  "
-                >
-                  Tera data kisi server pe save nahi hota. Sirf browser mein.
-                </p>
-                <div style="margin-top: var(--space-4)">
-                  <span class="tag tag--green">Zero Data Storage</span>
-                </div>
+                  ">
+                Real questions, apna jawab likho, detailed feedback pao.
+              </p>
+              <div style="margin-top: var(--space-4)">
+                <span class="tag tag--yellow">Interactive</span>
               </div>
             </div>
           </div>
-        </section>
-
-        <!-- ── RESUME ANALYZER ────────────────────────────────────────────── -->
-        <section class="panel" id="panel-resume">
-          <div class="page-header">
-            <h2 class="page-title">Resume Analyzer</h2>
-            <p class="page-desc">
-              PM/BA lens se apna resume analyze karo — ATS score, weaknesses,
-              rewritten bullets.
-            </p>
-          </div>
-
-          <!-- Progress Steps -->
-          <div class="progress-steps" style="margin-bottom: var(--space-6)">
-            <div class="progress-step progress-step--active" id="rs-1">
-              <div class="progress-step__num">1</div>
-              Role Select
-            </div>
-            <div class="progress-step" id="rs-2">
-              <div class="progress-step__num">2</div>
-              Upload
-            </div>
-            <div class="progress-step" id="rs-3">
-              <div class="progress-step__num">3</div>
-              Analyzing
-            </div>
-            <div class="progress-step" id="rs-4">
-              <div class="progress-step__num">4</div>
-              Results
-            </div>
-          </div>
-
           <div class="card">
             <div class="card__body">
-              <div class="grid-2 grid-2--asymmetric">
-                <!-- Left: Inputs -->
-                <div>
-                  <div class="field" style="margin-bottom: var(--space-5)">
-                    <label class="field__label">Target Role</label>
-                    <select class="field__select" id="resume-role">
-                      <optgroup label="Product & Business">
-                        <option>Associate Product Manager</option>
-                        <option>Junior Product Manager</option>
-                        <option>Business Analyst</option>
-                        <option>Product Analyst</option>
-                        <option>Operations Manager</option>
-                      </optgroup>
-                      <optgroup label="Data & Analytics">
-                        <option>Data Analyst</option>
-                        <option>Data Scientist</option>
-                        <option>Machine Learning Engineer</option>
-                        <option>Business Intelligence Analyst</option>
-                      </optgroup>
-                      <optgroup label="Software Engineering">
-                        <option>Software Development Engineer (SDE-1)</option>
-                        <option>Frontend Developer</option>
-                        <option>Backend Developer</option>
-                        <option>Full Stack Developer</option>
-                        <option>DevOps Engineer</option>
-                      </optgroup>
-                      <optgroup label="Marketing & Growth">
-                        <option>Digital Marketing Executive</option>
-                        <option>SEO Executive</option>
-                        <option>Social Media Manager</option>
-                        <option>Growth Analyst</option>
-                        <option>Content Strategist</option>
-                      </optgroup>
-                      <optgroup label="Design">
-                        <option>UI/UX Designer</option>
-                        <option>Product Designer</option>
-                      </optgroup>
-                    </select>
-                  </div>
-
-                  <div class="field" style="margin-bottom: var(--space-3)">
-                    <label class="field__label">Resume Upload</label>
-                    <div class="drop-zone" id="resume-drop-zone">
-                      <div class="drop-zone__icon">📄</div>
-                      <div class="drop-zone__title">PDF ya DOC upload karo</div>
-                      <div class="drop-zone__sub">
-                        Click karo ya drag &amp; drop — PDF, DOC, DOCX, TXT
-                      </div>
-                      <input
-                        type="file"
-                        id="resume-file-input"
-                        accept=".pdf,.doc,.docx,.txt"
-                        style="display: none"
-                      />
-                    </div>
-                    <span
-                      id="resume-file-name"
-                      class="hidden"
-                      style="
-                        font-size: var(--text-xs);
-                        color: var(--color-red);
-                        margin-top: var(--space-2);
-                        display: block;
-                      "
-                    ></span>
-                  </div>
-
-                  <div class="field-divider">ya</div>
-
-                  <div class="field">
-                    <label class="field__label">Resume Text Paste Karo</label>
-                    <textarea
-                      class="field__textarea"
-                      id="resume-text"
-                      placeholder="Seedha text paste karo yahan..."
-                    ></textarea>
-                  </div>
-                </div>
-
-                <!-- Right: What you'll get + CTA -->
-                <div>
-                  <p
-                    style="
-                      font-size: var(--text-xs);
-                      font-weight: var(--weight-bold);
-                      color: var(--color-text-secondary);
-                      text-transform: uppercase;
-                      letter-spacing: 0.5px;
-                      margin-bottom: var(--space-4);
-                    "
-                  >
-                    What You'll Get
-                  </p>
-                  <div
-                    style="
-                      display: flex;
-                      flex-direction: column;
-                      gap: var(--space-3);
-                      margin-bottom: var(--space-6);
-                    "
-                  >
-                    <div
-                      style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      "
-                    >
-                      <span style="color: var(--color-green)">✓</span> Top 3
-                      strengths &amp; weaknesses
-                    </div>
-                    <div
-                      style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      "
-                    >
-                      <span style="color: var(--color-green)">✓</span> ATS score
-                      with explanation
-                    </div>
-                    <div
-                      style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      "
-                    >
-                      <span style="color: var(--color-green)">✓</span> 3 quick
-                      fixes for today
-                    </div>
-                    <div
-                      style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      "
-                    >
-                      <span style="color: var(--color-green)">✓</span> Rewritten
-                      bullets in role-specific language
-                    </div>
-                    <div
-                      style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      "
-                    >
-                      <span style="color: var(--color-green)">✓</span> Hinglish
-                      mein — easy to understand
-                    </div>
-                  </div>
-                  <button class="btn btn--primary btn--full" id="resume-btn">
-                    🔍 Analyze Resume
-                  </button>
-                  <div class="loading-bar mt-3" id="resume-progress">
-                    <div class="loading-bar__fill" id="resume-bar"></div>
-                  </div>
-                </div>
+              <div style="font-size: 28px; margin-bottom: var(--space-3)">
+                🔒
+              </div>
+              <div class="card__title" style="margin-bottom: var(--space-2)">
+                100% Private
+              </div>
+              <p style="
+                    font-size: var(--text-sm);
+                    color: var(--color-text-muted);
+                    line-height: 1.5;
+                    margin: 0;
+                  ">
+                Tera data kisi server pe save nahi hota. Sirf browser mein.
+              </p>
+              <div style="margin-top: var(--space-4)">
+                <span class="tag tag--green">Zero Data Storage</span>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div class="result-box" id="resume-result">
-            <div class="result-box__header">
-              <span class="result-box__title">📊 Analysis Results</span>
-              <span class="tag tag--green">Complete</span>
-            </div>
-            <div class="result-box__body" id="resume-result-content"></div>
+      <!-- ── RESUME ANALYZER ────────────────────────────────────────────── -->
+      <section class="panel" id="panel-resume">
+        <div class="page-header">
+          <h2 class="page-title">Resume Analyzer</h2>
+          <p class="page-desc">
+            PM/BA lens se apna resume analyze karo — ATS score, weaknesses,
+            rewritten bullets.
+          </p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps" style="margin-bottom: var(--space-6)">
+          <div class="progress-step progress-step--active" id="rs-1">
+            <div class="progress-step__num">1</div>
+            Role Select
           </div>
-        </section>
-
-        <!-- ── JD MATCHER ─────────────────────────────────────────────────── -->
-        <section class="panel" id="panel-jd">
-          <div class="page-header">
-            <h2 class="page-title">JD Matcher</h2>
-            <p class="page-desc">
-              Job description paste karo aur resume ke exact gaps aur
-              corrections pao.
-            </p>
+          <div class="progress-step" id="rs-2">
+            <div class="progress-step__num">2</div>
+            Upload
           </div>
-
-          <div class="card">
-            <div class="card__body">
-              <div class="grid-2">
-                <!-- JD input -->
-                <div class="field">
-                  <label class="field__label">Job Description</label>
-                  <textarea
-                    class="field__textarea"
-                    id="jd-text"
-                    placeholder="Full job description paste karo..."
-                    style="min-height: 220px"
-                  ></textarea>
-                </div>
-
-                <!-- Resume input -->
-                <div>
-                  <div class="field" style="margin-bottom: var(--space-3)">
-                    <label class="field__label">Resume Upload</label>
-                    <div
-                      class="drop-zone"
-                      id="jd-drop-zone"
-                      style="padding: var(--space-4)"
-                    >
-                      <div class="drop-zone__icon" style="font-size: 20px">
-                        📄
-                      </div>
-                      <div class="drop-zone__title">PDF ya DOC upload karo</div>
-                      <div class="drop-zone__sub">Click ya drag &amp; drop</div>
-                      <input
-                        type="file"
-                        id="jd-file-input"
-                        accept=".pdf,.doc,.docx,.txt"
-                        style="display: none"
-                      />
-                    </div>
-                    <span
-                      id="jd-file-name"
-                      class="hidden"
-                      style="
-                        font-size: var(--text-xs);
-                        color: var(--color-red);
-                        margin-top: var(--space-2);
-                        display: block;
-                      "
-                    ></span>
-                  </div>
-
-                  <div class="field-divider">ya</div>
-
-                  <div class="field">
-                    <label class="field__label">Resume Text</label>
-                    <textarea
-                      class="field__textarea"
-                      id="jd-resume-text"
-                      placeholder="Apna resume paste karo..."
-                      style="min-height: 100px"
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-
-              <div style="margin-top: var(--space-5)">
-                <button class="btn btn--primary" id="jd-btn">
-                  🎯 Match Karo &amp; Analyze
-                </button>
-              </div>
-              <div class="loading-bar mt-3" id="jd-progress">
-                <div class="loading-bar__fill" id="jd-bar"></div>
-              </div>
-            </div>
+          <div class="progress-step" id="rs-3">
+            <div class="progress-step__num">3</div>
+            Analyzing
           </div>
-
-          <div class="result-box" id="jd-result">
-            <div class="result-box__header">
-              <span class="result-box__title">🎯 Match Analysis</span>
-              <span class="tag tag--blue">Ready</span>
-            </div>
-            <div class="result-box__body" id="jd-result-content"></div>
+          <div class="progress-step" id="rs-4">
+            <div class="progress-step__num">4</div>
+            Results
           </div>
-        </section>
+        </div>
 
-        <!-- ── MOCK INTERVIEW ─────────────────────────────────────────────── -->
-        <section class="panel" id="panel-interview">
-          <div class="page-header">
-            <h2 class="page-title">Mock Interview</h2>
-            <p class="page-desc">
-              Real questions practice karo — jawab likho — detailed AI feedback
-              pao.
-            </p>
-          </div>
-
-          <div class="grid-2" style="margin-bottom: var(--space-5)">
-            <div class="card">
-              <div class="card__body">
-                <div class="field" style="margin-bottom: var(--space-4)">
+        <div class="card">
+          <div class="card__body">
+            <div class="grid-2 grid-2--asymmetric">
+              <!-- Left: Inputs -->
+              <div>
+                <div class="field" style="margin-bottom: var(--space-5)">
                   <label class="field__label">Target Role</label>
-                  <select class="field__select" id="int-role">
+                  <select class="field__select" id="resume-role">
                     <optgroup label="Product & Business">
                       <option>Associate Product Manager</option>
+                      <option>Junior Product Manager</option>
                       <option>Business Analyst</option>
                       <option>Product Analyst</option>
                       <option>Operations Manager</option>
@@ -615,143 +314,369 @@
                     </optgroup>
                   </select>
                 </div>
-                <div class="field" style="margin-bottom: 0">
-                  <label class="field__label">Interview Type</label>
-                  <select class="field__select" id="int-type">
-                    <option>Behavioral — HR Round</option>
-                    <option>Case Study — PM Round</option>
-                    <option>Technical — SQL / Data</option>
-                    <option>Technical — Coding / DSA</option>
-                    <option>Technical — System Design</option>
-                    <option>Product Sense</option>
-                    <option>Marketing Strategy Round</option>
-                    <option>SEO / Analytics Round</option>
-                    <option>Design Portfolio Round</option>
-                    <option>Situational — Startup Round</option>
-                  </select>
+
+                <div class="field" style="margin-bottom: var(--space-3)">
+                  <label class="field__label">Resume Upload</label>
+                  <div class="drop-zone" id="resume-drop-zone">
+                    <div class="drop-zone__icon">📄</div>
+                    <div class="drop-zone__title">PDF ya DOC upload karo</div>
+                    <div class="drop-zone__sub">
+                      Click karo ya drag &amp; drop — PDF, DOC, DOCX, TXT
+                    </div>
+                    <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.txt" style="display: none" />
+                  </div>
+                  <span id="resume-file-name" class="hidden" style="
+                        font-size: var(--text-xs);
+                        color: var(--color-red);
+                        margin-top: var(--space-2);
+                        display: block;
+                      "></span>
+                </div>
+
+                <div class="field-divider">ya</div>
+
+                <div class="field">
+                  <label class="field__label">Resume Text Paste Karo</label>
+                  <textarea class="field__textarea" id="resume-text"
+                    placeholder="Seedha text paste karo yahan..."></textarea>
+                </div>
+              </div>
+
+              <!-- Right: What you'll get + CTA -->
+              <div>
+                <p style="
+                      font-size: var(--text-xs);
+                      font-weight: var(--weight-bold);
+                      color: var(--color-text-secondary);
+                      text-transform: uppercase;
+                      letter-spacing: 0.5px;
+                      margin-bottom: var(--space-4);
+                    ">
+                  What You'll Get
+                </p>
+                <div style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: var(--space-3);
+                      margin-bottom: var(--space-6);
+                    ">
+                  <div style="
+                        display: flex;
+                        gap: var(--space-3);
+                        align-items: flex-start;
+                        font-size: var(--text-sm);
+                        color: var(--color-text-secondary);
+                      ">
+                    <span style="color: var(--color-green)">✓</span> Top 3
+                    strengths &amp; weaknesses
+                  </div>
+                  <div style="
+                        display: flex;
+                        gap: var(--space-3);
+                        align-items: flex-start;
+                        font-size: var(--text-sm);
+                        color: var(--color-text-secondary);
+                      ">
+                    <span style="color: var(--color-green)">✓</span> ATS score
+                    with explanation
+                  </div>
+                  <div style="
+                        display: flex;
+                        gap: var(--space-3);
+                        align-items: flex-start;
+                        font-size: var(--text-sm);
+                        color: var(--color-text-secondary);
+                      ">
+                    <span style="color: var(--color-green)">✓</span> 3 quick
+                    fixes for today
+                  </div>
+                  <div style="
+                        display: flex;
+                        gap: var(--space-3);
+                        align-items: flex-start;
+                        font-size: var(--text-sm);
+                        color: var(--color-text-secondary);
+                      ">
+                    <span style="color: var(--color-green)">✓</span> Rewritten
+                    bullets in role-specific language
+                  </div>
+                  <div style="
+                        display: flex;
+                        gap: var(--space-3);
+                        align-items: flex-start;
+                        font-size: var(--text-sm);
+                        color: var(--color-text-secondary);
+                      ">
+                    <span style="color: var(--color-green)">✓</span> Hinglish
+                    mein — easy to understand
+                  </div>
+                </div>
+                <button class="btn btn--primary btn--full" id="resume-btn">
+                  🔍 Analyze Resume
+                </button>
+                <div class="loading-bar mt-3" id="resume-progress">
+                  <div class="loading-bar__fill" id="resume-bar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-box" id="resume-result">
+          <div class="result-box__header">
+            <span class="result-box__title">📊 Analysis Results</span>
+            <span class="tag tag--green">Complete</span>
+          </div>
+          <div class="result-box__body" id="resume-result-content"></div>
+        </div>
+      </section>
+
+      <!-- ── JD MATCHER ─────────────────────────────────────────────────── -->
+      <section class="panel" id="panel-jd">
+        <div class="page-header">
+          <h2 class="page-title">JD Matcher</h2>
+          <p class="page-desc">
+            Job description paste karo aur resume ke exact gaps aur
+            corrections pao.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card__body">
+            <div class="grid-2">
+              <!-- JD input -->
+              <div class="field">
+                <label class="field__label">Job Description</label>
+                <textarea class="field__textarea" id="jd-text" placeholder="Full job description paste karo..."
+                  style="min-height: 220px"></textarea>
+              </div>
+
+              <!-- Resume input -->
+              <div>
+                <div class="field" style="margin-bottom: var(--space-3)">
+                  <label class="field__label">Resume Upload</label>
+                  <div class="drop-zone" id="jd-drop-zone" style="padding: var(--space-4)">
+                    <div class="drop-zone__icon" style="font-size: 20px">
+                      📄
+                    </div>
+                    <div class="drop-zone__title">PDF ya DOC upload karo</div>
+                    <div class="drop-zone__sub">Click ya drag &amp; drop</div>
+                    <input type="file" id="jd-file-input" accept=".pdf,.doc,.docx,.txt" style="display: none" />
+                  </div>
+                  <span id="jd-file-name" class="hidden" style="
+                        font-size: var(--text-xs);
+                        color: var(--color-red);
+                        margin-top: var(--space-2);
+                        display: block;
+                      "></span>
+                </div>
+
+                <div class="field-divider">ya</div>
+
+                <div class="field">
+                  <label class="field__label">Resume Text</label>
+                  <textarea class="field__textarea" id="jd-resume-text" placeholder="Apna resume paste karo..."
+                    style="min-height: 100px"></textarea>
                 </div>
               </div>
             </div>
 
-            <div class="card">
-              <div
-                class="card__body"
-                style="
+            <div style="margin-top: var(--space-5)">
+              <button class="btn btn--primary" id="jd-btn">
+                🎯 Match Karo &amp; Analyze
+              </button>
+            </div>
+            <div class="loading-bar mt-3" id="jd-progress">
+              <div class="loading-bar__fill" id="jd-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-box" id="jd-result">
+          <div class="result-box__header">
+            <span class="result-box__title">🎯 Match Analysis</span>
+            <span class="tag tag--blue">Ready</span>
+          </div>
+          <div class="result-box__body" id="jd-result-content"></div>
+        </div>
+      </section>
+
+      <!-- ── MOCK INTERVIEW ─────────────────────────────────────────────── -->
+      <section class="panel" id="panel-interview">
+        <div class="page-header">
+          <h2 class="page-title">Mock Interview</h2>
+          <p class="page-desc">
+            Real questions practice karo — jawab likho — detailed AI feedback
+            pao.
+          </p>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: var(--space-5)">
+          <div class="card">
+            <div class="card__body">
+              <div class="field" style="margin-bottom: var(--space-4)">
+                <label class="field__label">Target Role</label>
+                <select class="field__select" id="int-role">
+                  <optgroup label="Product & Business">
+                    <option>Associate Product Manager</option>
+                    <option>Business Analyst</option>
+                    <option>Product Analyst</option>
+                    <option>Operations Manager</option>
+                  </optgroup>
+                  <optgroup label="Data & Analytics">
+                    <option>Data Analyst</option>
+                    <option>Data Scientist</option>
+                    <option>Machine Learning Engineer</option>
+                    <option>Business Intelligence Analyst</option>
+                  </optgroup>
+                  <optgroup label="Software Engineering">
+                    <option>Software Development Engineer (SDE-1)</option>
+                    <option>Frontend Developer</option>
+                    <option>Backend Developer</option>
+                    <option>Full Stack Developer</option>
+                    <option>DevOps Engineer</option>
+                  </optgroup>
+                  <optgroup label="Marketing & Growth">
+                    <option>Digital Marketing Executive</option>
+                    <option>SEO Executive</option>
+                    <option>Social Media Manager</option>
+                    <option>Growth Analyst</option>
+                    <option>Content Strategist</option>
+                  </optgroup>
+                  <optgroup label="Design">
+                    <option>UI/UX Designer</option>
+                    <option>Product Designer</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="field" style="margin-bottom: 0">
+                <label class="field__label">Interview Type</label>
+                <select class="field__select" id="int-type">
+                  <option>Behavioral — HR Round</option>
+                  <option>Case Study — PM Round</option>
+                  <option>Technical — SQL / Data</option>
+                  <option>Technical — Coding / DSA</option>
+                  <option>Technical — System Design</option>
+                  <option>Product Sense</option>
+                  <option>Marketing Strategy Round</option>
+                  <option>SEO / Analytics Round</option>
+                  <option>Design Portfolio Round</option>
+                  <option>Situational — Startup Round</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__body" style="
                   display: flex;
                   flex-direction: column;
                   gap: var(--space-3);
-                "
-              >
-                <button class="btn btn--primary btn--full" id="gen-btn">
-                  ❓ Generate Question
-                </button>
-                <button class="btn btn--secondary btn--full" id="new-q-btn">
-                  🔄 New Question (Different)
-                </button>
-                <p
-                  style="
+                ">
+              <button class="btn btn--primary btn--full" id="gen-btn">
+                ❓ Generate Question
+              </button>
+              <button class="btn btn--secondary btn--full" id="new-q-btn">
+                🔄 New Question (Different)
+              </button>
+              <p style="
                     font-size: var(--text-xs);
                     color: var(--color-text-muted);
                     text-align: center;
-                  "
-                >
-                  Pehle question generate karo, phir jawab likho neeche
-                </p>
+                  ">
+                Pehle question generate karo, phir jawab likho neeche
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Display -->
+        <div class="question-box" id="question-box">
+          <div class="question-box__label">❓ Interview Question</div>
+          <div class="question-box__text" id="question-text"></div>
+          <div class="question-box__tags" id="question-tags"></div>
+        </div>
+
+        <!-- Answer Section -->
+        <div id="answer-section" style="display: none; margin-top: var(--space-5)">
+          <div class="card">
+            <div class="card__header">
+              <div class="card__title">✍️ Apna Jawab Likho</div>
+              <div class="card__desc">
+                Jitna detail mein likh sako — AI better feedback dega
+              </div>
+            </div>
+            <div class="card__body">
+              <div class="field" style="margin-bottom: var(--space-4)">
+                <textarea class="field__textarea" id="user-answer" placeholder="Yahan apna jawab likho..."
+                  style="min-height: 160px"></textarea>
+              </div>
+              <div style="display: flex; gap: var(--space-3)">
+                <button class="btn btn--primary" id="feedback-btn">
+                  💬 Get AI Feedback
+                </button>
+                <button class="btn btn--secondary" id="tips-btn">
+                  📋 Expected Answer
+                </button>
+              </div>
+              <div class="loading-bar mt-3" id="int-progress">
+                <div class="loading-bar__fill" id="int-bar"></div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Question Display -->
-          <div class="question-box" id="question-box">
-            <div class="question-box__label">❓ Interview Question</div>
-            <div class="question-box__text" id="question-text"></div>
-            <div class="question-box__tags" id="question-tags"></div>
-          </div>
+        <!-- Chat output -->
+        <div class="chat" id="chat-container"></div>
+      </section>
 
-          <!-- Answer Section -->
-          <div
-            id="answer-section"
-            style="display: none; margin-top: var(--space-5)"
-          >
-            <div class="card">
-              <div class="card__header">
-                <div class="card__title">✍️ Apna Jawab Likho</div>
-                <div class="card__desc">
-                  Jitna detail mein likh sako — AI better feedback dega
-                </div>
-              </div>
-              <div class="card__body">
-                <div class="field" style="margin-bottom: var(--space-4)">
-                  <textarea
-                    class="field__textarea"
-                    id="user-answer"
-                    placeholder="Yahan apna jawab likho..."
-                    style="min-height: 160px"
-                  ></textarea>
-                </div>
-                <div style="display: flex; gap: var(--space-3)">
-                  <button class="btn btn--primary" id="feedback-btn">
-                    💬 Get AI Feedback
-                  </button>
-                  <button class="btn btn--secondary" id="tips-btn">
-                    📋 Expected Answer
-                  </button>
-                </div>
-                <div class="loading-bar mt-3" id="int-progress">
-                  <div class="loading-bar__fill" id="int-bar"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Chat output -->
-          <div class="chat" id="chat-container"></div>
-        </section>
-
-        <section class="panel" id="panel-history">
-          <div
-            class="page-header"
-            style="
+      <section class="panel" id="panel-history">
+        <div class="page-header" style="
               display: flex;
               justify-content: space-between;
               align-items: center;
-            "
-          >
-            <h2 class="page-title">Interview History</h2>
-            <button class="btn btn--secondary btn--sm" id="clear-history-btn">
-              Clear History
-            </button>
-          </div>
-          <div id="history-list" style="margin-top: var(--space-4)">
-            <!-- JS will render past sessions here -->
-          </div>
-        </section>
-      </main>
-    </div>
+            ">
+          <h2 class="page-title">Interview History</h2>
+          <button class="btn btn--secondary btn--sm" id="clear-history-btn">
+            Clear History
+          </button>
+        </div>
+        <div id="history-list" style="margin-top: var(--space-4)">
+          <!-- JS will render past sessions here -->
+        </div>
+      </section>
+    </main>
+  </div>
 
   <!-- ── FOOTER ────────────────────────────────────────────────────────────── -->
-<footer style="border-top:1px solid var(--color-border);padding:var(--space-4) var(--space-6);display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);">
+  <footer
+    style="border-top:1px solid var(--color-border);padding:var(--space-4) var(--space-6);display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);">
     <span style="font-size:var(--text-xs);color:var(--color-text-muted);">Built by Rahul Sharma · MIT License</span>
     <div style="display:flex;align-items:center;gap:var(--space-4);">
-  
-  <a href="/cdn-cgi/l/email-protection#24474556414156474b544d484b501410644349454d480a474b49" target="_blank" rel="noopener" style="font-size:var(--text-xs);font-weight:var(--weight-semibold);color:var(--color-text-muted);text-decoration:none;display:flex;align-items:center;gap:6px;">
-    📩 Email Us
-  </a>
+
+      <a href="/cdn-cgi/l/email-protection#24474556414156474b544d484b501410644349454d480a474b49" target="_blank"
+        rel="noopener"
+        style="font-size:var(--text-xs);font-weight:var(--weight-semibold);color:var(--color-text-muted);text-decoration:none;display:flex;align-items:center;gap:6px;">
+        📩 Email Us
+      </a>
       <a href="https://x.com/careercopilot04" target="_blank" rel="noopener"
         style="font-size:var(--text-xs);font-weight:var(--weight-semibold);color:var(--color-text-muted);text-decoration:none;display:flex;align-items:center;gap:6px;">
         𝕏 Follow on X
-  </a>
-  <a href="https://linkedin.com/in/ra4hul" target="_blank" rel="noopener"
+      </a>
+      <a href="https://linkedin.com/in/ra4hul" target="_blank" rel="noopener"
         style="font-size:var(--text-xs);font-weight:var(--weight-semibold);color:var(--color-text-muted);text-decoration:none;display:flex;align-items:center;gap:6px;">
         in LinkedIn
-  </a>
-  <a href="https://github.com/r4huldeveloper/Career-Copilot" target="_blank" rel="noopener"
+      </a>
+      <a href="https://github.com/r4huldeveloper/Career-Copilot" target="_blank" rel="noopener"
         style="font-size:var(--text-xs);font-weight:var(--weight-semibold);color:var(--color-text-muted);text-decoration:none;display:flex;align-items:center;gap:6px;">
         ⭐ GitHub
- </a>
+      </a>
     </div>
-</footer>
-    
+  </footer>
 
-    <!-- ES Modules — browser natively supports this, no bundler needed -->
-    <script data-cfasync="false
+
+  <!-- ES Modules — browser natively supports this, no bundler needed -->
+  <script type="module" src="src/app.js"></script>
+</body>
+
+</html>
