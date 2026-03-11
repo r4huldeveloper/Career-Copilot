@@ -1,0 +1,89 @@
+/* ============================================================
+   variables.css — Design Tokens
+   Single source of truth for all design decisions.
+   Change here → changes everywhere.
+   ============================================================ */
+
+:root {
+  /* Colors */
+  --color-bg:           #fafafa;
+  --color-surface:      #ffffff;
+  --color-border:       #e4e4e7;
+  --color-border-strong:#d1d5db;
+
+  --color-text-primary: #09090b;
+  --color-text-secondary:#52525b;
+  --color-text-muted:   #a1a1aa;
+
+  --color-accent:       #2563eb;
+  --color-accent-light: #eff6ff;
+  --color-accent-dark:  #1d4ed8;
+
+  --color-green:        #16a34a;
+  --color-green-light:  #f0fdf4;
+  --color-green-border: #bbf7d0;
+
+  --color-red:          #dc2626;
+  --color-red-light:    #fef2f2;
+
+  --color-yellow:       #d97706;
+  --color-yellow-light: #fffbeb;
+  --color-yellow-border:#fde68a;
+
+  --color-purple:       #7c3aed;
+  --color-purple-light: #f5f3ff;
+  --color-purple-border:#ddd6fe;
+
+  /* Typography */
+  --font-sans:    'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    'Geist Mono', 'Fira Code', monospace;
+
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 14px;
+  --text-md:   15px;
+  --text-lg:   18px;
+  --text-xl:   22px;
+  --text-2xl:  28px;
+  --text-3xl:  36px;
+
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold:600;
+  --weight-bold:    700;
+  --weight-black:   800;
+
+  /* Spacing */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 10px 15px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.07), 0 20px 40px rgba(0,0,0,0.07);
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition-base: 150ms ease;
+  --transition-slow: 250ms ease;
+
+  /* Layout */
+  --topbar-height: 56px;
+  --sidebar-width: 220px;
+  --content-max-w: 860px;
+}
