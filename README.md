@@ -108,7 +108,7 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 Built by **Rahul Sharma** — built the tool he wished existed when job hunting.
 
 - GitHub: [@r4huldeveloper](https://github.com/r4huldeveloper)
-- LinkedIn: [your LinkedIn URL]
+- LinkedIn: [@Rahul Sharma](https://linkedin.com/in/ra4hul)
 
 ---
 
