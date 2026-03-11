@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C3AED"/>
+      <stop offset="100%" style="stop-color:#2563EB"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- Wing — white -->
+  <path d="M 240 432
+           C 208 352, 160 272, 144 192
+           C 128 112, 160 48, 216 48
+           C 248 48, 264 88, 272 128
+           C 296 80, 344 48, 384 64
+           C 416 80, 424 136, 392 192
+           C 424 160, 464 160, 472 200
+           C 480 240, 444 288, 384 312
+           C 320 344, 272 384, 240 432 Z"
+        fill="white" opacity="0.92"/>
+
+  <!-- Wing feather line -->
+  <path d="M 256 384 C 312 320, 384 288, 448 272" stroke="white" stroke-width="11" fill="none" stroke-opacity="0.35"/>
+  <path d="M 248 336 C 300 278, 364 254, 424 242" stroke="white" stroke-width="8" fill="none" stroke-opacity="0.22"/>
+
+  <!-- Ladder left rail -->
+  <rect x="152" y="216" width="45" height="240" rx="22" fill="#BFDBFE"/>
+  <!-- Ladder right rail -->
+  <rect x="256" y="216" width="45" height="240" rx="22" fill="#BFDBFE"/>
+  <!-- Rungs -->
+  <rect x="152" y="256" width="152" height="35" rx="17" fill="#BFDBFE"/>
+  <rect x="152" y="328" width="152" height="35" rx="17" fill="#BFDBFE"/>
+  <rect x="152" y="400" width="152" height="35" rx="17" fill="#BFDBFE"/>
+</svg>
