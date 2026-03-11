@@ -6,7 +6,7 @@
  */
 
 const KEYS = {
-  API_KEY: 'cc_groq_key',
+  API_KEY: "cc_groq_key",
 };
 
 export const storage = {
@@ -37,6 +37,19 @@ export const storage = {
   },
 };
 
-export const getApiKey = ()        => storage.get(KEYS.API_KEY) || '';
-export const setApiKey = (key)     => storage.set(KEYS.API_KEY, key);
-export const clearApiKey = ()      => storage.remove(KEYS.API_KEY);
+export const getApiKey = () => storage.get(KEYS.API_KEY) || "";
+export const setApiKey = (key) => storage.set(KEYS.API_KEY, key);
+export const clearApiKey = () => storage.remove(KEYS.API_KEY);
+
+// Interview Session History
+const HISTORY_KEY = "cc_interview_history";
+
+export const saveSession = (session) => {
+  const history = JSON.parse(storage.get(HISTORY_KEY) || "[]");
+  history.unshift(session); // newest first
+  storage.set(HISTORY_KEY, JSON.stringify(history));
+};
+
+export const getHistory = () => JSON.parse(storage.get(HISTORY_KEY) || "[]");
+
+export const clearHistory = () => storage.remove(HISTORY_KEY);
