@@ -89,9 +89,9 @@ Career-Copilot/
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 **Good first issues:**
-- [x] Add dark mode
+- [ ] Add dark mode
 - [ ] Add Gemini API support  
-- [ ] Save interview history locally
+- [x] Save interview history locally
 - [ ] Add Hindi UI option
 - [ ] Improve mobile layout
 
