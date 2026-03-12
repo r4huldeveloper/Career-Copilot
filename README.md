@@ -101,7 +101,6 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 - [ ] Add dark mode
 - [ ] Add Gemini API support  
 - [x] Save interview history locally
-- [ ] Add Hindi UI option
 - [x] Improve mobile layout
 
 ---
