@@ -102,7 +102,7 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 - [ ] Add Gemini API support  
 - [x] Save interview history locally
 - [ ] Add Hindi UI option
-- [ ] Improve mobile layout
+- [x] Improve mobile layout
 
 ---
 
