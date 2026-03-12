@@ -3,7 +3,7 @@
 </div>
 
 <br/>
-# 🚀 Career Copilot
+🚀 Career Copilot
 
 > AI-powered resume analyzer, JD matcher & mock interview tool — built specifically for Indian freshers.
 
