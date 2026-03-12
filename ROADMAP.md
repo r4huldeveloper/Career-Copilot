@@ -29,7 +29,7 @@ The first version — built in 1 day, shipped because someone else needed it too
 | Feature | Status |
 |---------|--------|
 | Dark mode toggle | 🔨 Open for contribution |
-| Copy-to-clipboard for AI suggestions | 🔨 Open for contribution |
+|  | 🔨 Open for contribution |
 | Mobile responsive layout | ✅ Shipped |
 | Resume score tracker over time | 🔨 Open for contribution |
 | Feedback Button | ✅ Shipped |
