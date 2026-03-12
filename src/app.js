@@ -2,6 +2,7 @@
  * app.js — Main Application Controller
  */
 
+import { initFeedbackWidget } from "./components/feedback.js";
 import {
   saveSession,
   getHistory,
@@ -262,5 +263,5 @@ function init() {
     item.addEventListener("click", () => { if (window.innerWidth <= 768) closeSidebar(); });
   });
 }
-
+initFeedbackWidget();
 document.addEventListener("DOMContentLoaded", init);
