@@ -17,7 +17,6 @@ The first version — built in 1 day, shipped because someone else needed it too
 | BYOK model — Groq API, free forever | ✅ Shipped |
 | 15+ job roles — PM, BA, SDE, Data Science, SEO, Design | ✅ Shipped |
 | Interview session history (localStorage) | ✅ Shipped |
-| Mobile responsive layout | ✅ Shipped |
 | Open source — MIT License | ✅ Shipped |
 | GitHub — branch protection, PR template, issue templates | ✅ Shipped |
 
@@ -29,7 +28,7 @@ The first version — built in 1 day, shipped because someone else needed it too
 |---------|--------|
 | Dark mode toggle | 🔨 Open for contribution |
 | Copy-to-clipboard for AI suggestions | 🔨 Open for contribution |
-| Mobile hamburger menu polish | 🔨 In progress |
+| Mobile responsive layout | 🔨 In progress |
 | Resume score tracker over time | 🔨 Open for contribution |
 
 ---
@@ -39,7 +38,6 @@ The first version — built in 1 day, shipped because someone else needed it too
 | Feature | Why |
 |---------|-----|
 | Gemini API support | Users who prefer Google's free tier |
-| Hindi UI option | Make it accessible for non-English users |
 | Resume templates download | Role-specific templates — PM, SDE, BA |
 | LinkedIn optimization tool | After resume, fix LinkedIn profile too |
 | Share interview score on LinkedIn | Viral loop — each share = new users |
