@@ -1,3 +1,8 @@
+<div align="center">
+  <img src="assets/banner.png" alt="Career Copilot Banner" width="100%"/>
+</div>
+
+<br/>
 # 🚀 Career Copilot
 
 > AI-powered resume analyzer, JD matcher & mock interview tool — built specifically for Indian freshers.
