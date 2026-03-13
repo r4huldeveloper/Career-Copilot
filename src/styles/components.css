@@ -752,3 +752,10 @@
 [data-theme="dark"] footer a:hover {
   color: var(--color-text-secondary) !important;
 }
+
+/* ── HAMBURGER DARK MODE FIX ─────────────────────────────── */
+[data-theme="dark"] .hamburger {
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
