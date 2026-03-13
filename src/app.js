@@ -264,6 +264,29 @@ function init() {
   document.querySelectorAll(".nav-item").forEach((item) => {
     item.addEventListener("click", () => { if (window.innerWidth <= 768) closeSidebar(); });
   });
+
+// ── Dark Mode Toggle ──────────────────────────────────────────────────
+const themeToggle = $("theme-toggle");
+const themeIcon = $("theme-icon");
+
+function applyTheme(dark) {
+  if (dark) {
+    document.documentElement.setAttribute("data-theme", "dark");
+    if (themeIcon) themeIcon.textContent = "☀️";
+    localStorage.setItem("theme", "dark");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    if (themeIcon) themeIcon.textContent = "🌙";
+    localStorage.setItem("theme", "light");
+  }
+}
+
+applyTheme(localStorage.getItem("theme") === "dark");
+
+themeToggle?.addEventListener("click", () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  applyTheme(!isDark);
+});
 }
 initFeedbackWidget();
 document.addEventListener("DOMContentLoaded", init);
