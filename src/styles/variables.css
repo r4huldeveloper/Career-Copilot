@@ -87,3 +87,32 @@
   --sidebar-width: 220px;
   --content-max-w: 860px;
 }
+
+/* ============================================================
+   Dark Mode Tokens
+   ============================================================ */
+
+[data-theme="dark"] {
+  --color-bg:            #09090b;
+  --color-surface:       #18181b;
+  --color-border:        #27272a;
+  --color-border-strong: #3f3f46;
+
+  --color-text-primary:  #fafafa;
+  --color-text-secondary:#a1a1aa;
+  --color-text-muted:    #52525b;
+
+  --color-accent-light:  #1e3a5f;
+  --color-green-light:   #052e16;
+  --color-green-border:  #166534;
+  --color-red-light:     #450a0a;
+  --color-yellow-light:  #451a03;
+  --color-yellow-border: #92400e;
+  --color-purple-light:  #2e1065;
+  --color-purple-border: #6d28d9;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 10px 15px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 20px 40px rgba(0,0,0,0.5);
+}

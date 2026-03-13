@@ -78,24 +78,29 @@
   </div>
 
   <!-- ── TOPBAR ────────────────────────────────────────────────────────────── -->
-  <header class="topbar">
-    <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
-    <a class="topbar__logo" href="#" data-panel="home">
-      <img src="favicon.svg" style="width:22px;height:22px;" alt="logo" />
-      Career Copilot
-    </a>
-
-    <div class="topbar__status">
-      <div class="topbar__status-dot" id="api-dot"></div>
-      <span id="api-status">API not connected</span>
-    </div>
+<header class="topbar">
+  <button class="hamburger" id="hamburger-btn" aria-label="Menu">☰</button>
+  <a class="topbar__logo" href="#" data-panel="home">
+    <img src="favicon.svg" style="width:22px;height:22px;" alt="logo" />
+    Career Copilot
+  </a>
+  <div class="topbar__status">
+    <div class="topbar__status-dot" id="api-dot"></div>
+    <span id="api-status">API not connected</span>
+  </div>
+  <div class="topbar__actions">
     <a href="https://github.com/r4huldeveloper/Career-Copilot" target="_blank" rel="noopener"
-      class="btn btn--secondary btn--sm topbar__github" style="margin-left:auto;">⭐ Star on GitHub</a> <button
-      class="btn btn--secondary btn--sm" data-action="show-setup">
-      Change API Key
+      class="btn btn--secondary btn--sm topbar__github">⭐ Star on GitHub</a>
+    <button class="btn btn--secondary btn--sm" data-action="show-setup">Change API Key</button>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+      <span class="theme-toggle__track">
+        <span class="theme-toggle__thumb"></span>
+      </span>
+      <span class="theme-toggle__icon" id="theme-icon">🌙</span>
     </button>
     <span class="topbar__badge">🇮🇳 Made for Indian Freshers</span>
-  </header>
+  </div>
+</header>
 
   <!-- ── APP SHELL ─────────────────────────────────────────────────────────── -->
   <div class="sidebar-overlay" id="sidebar-overlay"></div>

@@ -666,3 +666,89 @@
     right: var(--space-4);
   }
 }
+
+/* ── THEME TOGGLE ────────────────────────────────────────── */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-base);
+  flex-shrink: 0;
+}
+.theme-toggle:hover { background: var(--color-border); }
+
+.theme-toggle__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-slow);
+  flex-shrink: 0;
+}
+.theme-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-slow);
+}
+.theme-toggle__icon {
+  font-size: 14px;
+  line-height: 1;
+  user-select: none;
+}
+
+[data-theme="dark"] .theme-toggle__track { background: var(--color-accent); }
+[data-theme="dark"] .theme-toggle__thumb { transform: translateX(16px); }
+
+/* ── TOPBAR ACTIONS ──────────────────────────────────────── */
+.topbar__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ── DARK MODE — TOPBAR FIX ──────────────────────────────── */
+[data-theme="dark"] .topbar {
+  background: var(--color-surface);
+  border-bottom-color: var(--color-border);
+}
+[data-theme="dark"] .btn--secondary {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .btn--secondary:hover {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+[data-theme="dark"] .topbar__badge {
+  background: var(--color-surface);
+  color: var(--color-green);
+  border-color: var(--color-green-border);
+}
+
+/* ── DARK MODE — FOOTER FIX ──────────────────────────────── */
+[data-theme="dark"] footer {
+  background: var(--color-surface) !important;
+  border-top-color: var(--color-border) !important;
+}
+[data-theme="dark"] footer span,
+[data-theme="dark"] footer a {
+  color: var(--color-text-muted) !important;
+}
+[data-theme="dark"] footer a:hover {
+  color: var(--color-text-secondary) !important;
+}
