@@ -63,6 +63,7 @@ Career-Copilot/
 │   ├── api/
 │   │   └── groq.js       # All AI API calls
 │   ├── components/
+│   │   ├── feedback.js  # feedback button
 │   │   ├── fileUpload.js # Drag & drop upload
 │   │   ├── modal.js      # Modal controller
 │   │   └── progressBar.js # Progress animations
