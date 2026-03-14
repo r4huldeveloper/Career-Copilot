@@ -28,12 +28,12 @@ The first version — built in 1 day, shipped because someone else needed it too
 | Dark mode toggle | ✅ Shipped |
 | Mobile responsive layout | ✅ Shipped |
 | Feedback Button | ✅ Shipped |
-| `src/config.js` — centralized constants | 🔨 Open for contribution |
-| Replace `alert()` with modal UI messages | 🔨 Open for contribution |
-| Move `initFeedbackWidget()` inside `init()` | 🔨 Open for contribution |
-| Input sanitization — `feedback.js` + `app.js` | 🔨 Open for contribution |
-| `console.error` in all catch blocks | 🔨 Open for contribution |
-| Fix double `style` attribute on history-details | 🔨 Open for contribution |
+| `src/config.js` — centralized constants | ✅ Shipped |
+| Replace `alert()` with modal UI messages | ✅ Shipped |
+| Move `initFeedbackWidget()` inside `init()` | ✅ Shipped |
+| Input sanitization — `feedback.js` + `app.js` | ✅ Shipped |
+| `console.error` in all catch blocks | ✅ Shipped |
+| Fix double `style` attribute on history-details | ✅ Shipped |
 | AI Role Fit Analyzer | 🔨 Open for contribution |
 | Resume score tracker over time | 🔨 Open for contribution |
 
