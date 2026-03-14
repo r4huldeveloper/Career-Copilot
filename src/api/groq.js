@@ -7,6 +7,56 @@
 
 import { CONFIG } from "../config.js";
 
+// ── Session Cache ─────────────────────────────────────────────────────────────
+// Kyun sessionStorage: Same resume/JD dobara analyze karne pe
+// Groq API call waste hoti thi. Cache se instant result milta hai.
+// sessionStorage tab tak rehta hai jab tak browser tab open ho —
+// fresh session mein fresh results milenge.
+
+/**
+ * Generate a short cache key from input strings
+ * @param {string} prefix - Feature name e.g. "resume", "jd"
+ * @param {...string} parts - Input strings to hash
+ * @returns {string}
+ */
+function _cacheKey(prefix, ...parts) {
+  const raw = parts.join("|").slice(0, 500);
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash * 31 + raw.charCodeAt(i)) >>> 0;
+  }
+  return `cc_cache_${prefix}_${hash}`;
+}
+
+/**
+ * Get cached result from sessionStorage
+ * @param {string} key
+ * @returns {string|null}
+ */
+function _cacheGet(key) {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save result to sessionStorage cache
+ * @param {string} key
+ * @param {string} value
+ */
+function _cacheSet(key, value) {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch (err) {
+    // sessionStorage full ya disabled — silently skip, not critical
+    console.error("[groq] Cache set failed:", err.message);
+  }
+}
+
+// ── Core API Caller ───────────────────────────────────────────────────────────
+
 /**
  * Core Groq API caller — all AI functions use this
  * @param {string} userPrompt
@@ -47,11 +97,10 @@ async function callGroq(userPrompt, systemPrompt, apiKey) {
       const errData = await res.json();
       errMsg = errData?.error?.message || errMsg;
     } catch {
-      // JSON parse failed — use status code
+      // JSON parse failed — use status code message
     }
     console.error("[groq] API error:", res.status, errMsg);
 
-    // Specific errors — better UX
     if (res.status === 401) throw new Error("Invalid API key — Groq dashboard se check karo");
     if (res.status === 429) throw new Error("Rate limit — thodi der baad try karo");
     if (res.status === 503) throw new Error("Groq service unavailable — baad mein try karo");
@@ -67,10 +116,11 @@ async function callGroq(userPrompt, systemPrompt, apiKey) {
   }
 }
 
-// ── Resume Analyzer ──────────────────────────────────────────────────────────
+// ── Resume Analyzer ───────────────────────────────────────────────────────────
 
 /**
  * Analyze resume for a target role
+ * Caches result per resume+role combination for the session
  * @param {object} params
  * @param {string} params.resumeText
  * @param {string} params.targetRole
@@ -78,6 +128,10 @@ async function callGroq(userPrompt, systemPrompt, apiKey) {
  * @returns {Promise<string>}
  */
 export async function analyzeResume({ resumeText, targetRole, apiKey }) {
+  const cacheKey = _cacheKey("resume", resumeText, targetRole);
+  const cached = _cacheGet(cacheKey);
+  if (cached) return cached;
+
   const system = `Tu ek world-class career coach aur ATS expert hai jo specifically Indian job market ke liye ${targetRole} roles mein specialize karta hai.
 
 Tere paas yeh deep knowledge hai:
@@ -110,17 +164,21 @@ Is specific role ke liye kya missing hai — skills, tools, certifications, proj
 
 Hinglish mein jawab de. Depth rakh — surface level advice mat de.`;
 
-  return callGroq(
+  const result = await callGroq(
     `Target Role: ${targetRole}\n\nResume:\n${resumeText.slice(0, CONFIG.MAX_RESUME_LENGTH)}`,
     system,
     apiKey
   );
+
+  _cacheSet(cacheKey, result);
+  return result;
 }
 
-// ── JD Matcher ───────────────────────────────────────────────────────────────
+// ── JD Matcher ────────────────────────────────────────────────────────────────
 
 /**
  * Match resume against a job description
+ * Caches result per jd+resume combination for the session
  * @param {object} params
  * @param {string} params.jdText
  * @param {string} params.resumeText
@@ -128,6 +186,10 @@ Hinglish mein jawab de. Depth rakh — surface level advice mat de.`;
  * @returns {Promise<string>}
  */
 export async function matchJD({ jdText, resumeText, apiKey }) {
+  const cacheKey = _cacheKey("jd", jdText, resumeText);
+  const cached = _cacheGet(cacheKey);
+  if (cached) return cached;
+
   const system = `Tu ek expert ATS specialist aur recruiter hai jo Indian companies ke liye hiring karta hai.
 
 JD aur Resume ko line-by-line compare kar. Sirf gaps aur fixes pe focus kar.
@@ -149,17 +211,21 @@ Honest score + ek line — main gap kya hai.
 
 Hinglish mein. Laser focused — sirf JD vs Resume comparison. No generic advice.`;
 
-  return callGroq(
+  const result = await callGroq(
     `JOB DESCRIPTION:\n${jdText.slice(0, CONFIG.MAX_JD_LENGTH)}\n\nRESUME:\n${resumeText.slice(0, CONFIG.MAX_RESUME_LENGTH)}`,
     system,
     apiKey
   );
+
+  _cacheSet(cacheKey, result);
+  return result;
 }
 
-// ── Interview Question Generator ─────────────────────────────────────────────
+// ── Interview Question Generator ──────────────────────────────────────────────
 
 /**
  * Generate an interview question for a role and type
+ * Note: Questions NOT cached — forceNew flag needs fresh results always
  * @param {object} params
  * @param {string} params.role
  * @param {string} params.type

@@ -2,7 +2,7 @@
  * storage.js — LocalStorage wrapper
  * Handles all persistent browser storage with error safety.
  * Kyun: LocalStorage directly use karna risky hai — errors
- * silently fail karte hain. Yeh wrapper safe aur consistent banata hai.
+ * silently fail karte hain. Yeh wrapper safe, logged, aur consistent banata hai.
  */
 
 import { CONFIG } from "../config.js";
@@ -13,7 +13,7 @@ const KEYS = {
 };
 
 /**
- * Safe localStorage wrapper
+ * Safe localStorage wrapper with logging
  */
 export const storage = {
   /**
@@ -34,7 +34,7 @@ export const storage = {
    * Set a value in localStorage
    * @param {string} key
    * @param {string} value
-   * @returns {boolean}
+   * @returns {boolean} - True if successful
    */
   set(key, value) {
     try {
@@ -49,7 +49,7 @@ export const storage = {
   /**
    * Remove a value from localStorage
    * @param {string} key
-   * @returns {boolean}
+   * @returns {boolean} - True if successful
    */
   remove(key) {
     try {
@@ -64,28 +64,29 @@ export const storage = {
 
 // ── API Key ───────────────────────────────────────────────────────────────────
 
-/** @returns {string} */
+/** @returns {string} Stored Groq API key or empty string */
 export const getApiKey = () => storage.get(KEYS.API_KEY) || "";
 
-/** @param {string} key */
-export const setApiKey = (key) => storage.set(KEYS.API_KEY, key);
+/** @param {string} key - Groq API key to persist */
+export const setApiKey  = (key) => storage.set(KEYS.API_KEY, key);
 
+/** Clear stored API key */
 export const clearApiKey = () => storage.remove(KEYS.API_KEY);
 
 // ── Interview Session History ─────────────────────────────────────────────────
 
 /**
  * Save an interview session to history
- * Limits to CONFIG.MAX_HISTORY_SESSIONS to prevent localStorage overflow
- * @param {object} session
+ * Caps at CONFIG.MAX_HISTORY_SESSIONS to prevent localStorage overflow
+ * Kyun cap: Unlimited sessions would eventually fill localStorage (5MB limit)
+ * @param {object} session - Session object with date, role, question, answer, feedback
  */
 export function saveSession(session) {
   try {
     const raw = storage.get(KEYS.HISTORY);
     const history = raw ? JSON.parse(raw) : [];
-    history.unshift(session); // newest first
+    history.unshift(session);
 
-    // Limit size — prevent localStorage overflow
     if (history.length > CONFIG.MAX_HISTORY_SESSIONS) {
       history.splice(CONFIG.MAX_HISTORY_SESSIONS);
     }
@@ -97,8 +98,8 @@ export function saveSession(session) {
 }
 
 /**
- * Get all saved interview sessions
- * @returns {object[]}
+ * Get all saved interview sessions, newest first
+ * @returns {object[]} Array of session objects
  */
 export function getHistory() {
   try {
@@ -110,5 +111,7 @@ export function getHistory() {
   }
 }
 
-/** Clear all interview history */
+/**
+ * Clear all interview history from localStorage
+ */
 export const clearHistory = () => storage.remove(KEYS.HISTORY);

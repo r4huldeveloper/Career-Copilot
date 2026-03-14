@@ -26,7 +26,7 @@ import {
 } from "./api/groq.js";
 import { CONFIG } from "./config.js";
 
-// ── App State ────────────────────────────────────────────────────────────────
+// ── App State ─────────────────────────────────────────────────────────────────
 const state = {
   apiKey: "",
   resumeText: "",
@@ -35,14 +35,14 @@ const state = {
   questionCount: 0,
 };
 
-// ── DOM Helpers ──────────────────────────────────────────────────────────────
+// ── DOM Helpers ───────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
 const $v = (id) => $(id)?.value?.trim() || "";
 
 /**
- * Escape HTML to prevent XSS
- * @param {string} str
- * @returns {string}
+ * Escape HTML to prevent XSS — all user input must pass through this
+ * @param {string} str - Raw user input
+ * @returns {string} - Safe HTML string
  */
 function escapeHtml(str) {
   return String(str)
@@ -54,24 +54,26 @@ function escapeHtml(str) {
 }
 
 /**
- * Show an inline error message — no alert() anywhere
+ * Show inline error message — replaces all alert() usage
+ * Kyun: alert() blocks UI thread, breaks UX. Inline errors are non-blocking.
  * @param {string} elementId - ID of error display element
- * @param {string} message
+ * @param {string} message - Error message to display
  */
 function showError(elementId, message) {
   const el = $(elementId);
   if (el) {
     el.textContent = "⚠️ " + message;
     el.classList.remove("hidden");
+    el.setAttribute("role", "alert");
     setTimeout(() => el.classList.add("hidden"), 5000);
   }
 }
 
 /**
  * Show result box with parsed markdown content
- * @param {string} boxId
- * @param {string} contentId
- * @param {string} html
+ * @param {string} boxId - Result container ID
+ * @param {string} contentId - Inner content element ID
+ * @param {string} html - Parsed HTML to display
  */
 function showResult(boxId, contentId, html) {
   const box = $(boxId);
@@ -82,9 +84,9 @@ function showResult(boxId, contentId, html) {
 
 /**
  * Add a chat message to the interview chat container
- * @param {string} containerId
- * @param {"ai"|"user"} role
- * @param {string} html - Already-escaped or trusted HTML
+ * @param {string} containerId - Chat container element ID
+ * @param {"ai"|"user"} role - Message sender role
+ * @param {string} html - Already-escaped or AI-trusted HTML
  */
 function addChatMsg(containerId, role, html) {
   const container = $(containerId);
@@ -99,10 +101,10 @@ function addChatMsg(containerId, role, html) {
 }
 
 /**
- * Toggle button disabled state
- * @param {string} id
- * @param {boolean} disabled
- * @param {string} [text]
+ * Set button loading/idle state
+ * @param {string} id - Button element ID
+ * @param {boolean} disabled - Whether to disable the button
+ * @param {string} [text] - Optional button label
  */
 function setBtn(id, disabled, text) {
   const btn = $(id);
@@ -112,8 +114,8 @@ function setBtn(id, disabled, text) {
 }
 
 /**
- * Switch active panel
- * @param {string} name
+ * Switch active panel and reset scroll
+ * @param {string} name - Panel name matching data-panel attribute
  */
 function showPanel(name) {
   document.querySelectorAll(".panel").forEach((p) => p.classList.remove("panel--active"));
@@ -126,13 +128,13 @@ function showPanel(name) {
 const apiModal = createModal("setup-overlay");
 
 /**
- * Update topbar connection status indicator
- * @param {boolean} connected
+ * Update topbar Groq connection status indicator
+ * @param {boolean} connected - Whether API key is set
  */
 function updateConnectionStatus(connected) {
-  const dot = $("api-dot");
+  const dot    = $("api-dot");
   const status = $("api-status");
-  const card = $("sidebar-api-card");
+  const card   = $("sidebar-api-card");
   if (connected) {
     dot?.classList.add("topbar__status-dot--connected");
     if (status) { status.textContent = "Groq connected"; status.style.color = "var(--color-green)"; }
@@ -145,7 +147,7 @@ function updateConnectionStatus(connected) {
 }
 
 /**
- * Validate and save Groq API key
+ * Validate and persist Groq API key to localStorage
  */
 function saveApiKey() {
   const key = $v("api-key-input");
@@ -159,8 +161,52 @@ function saveApiKey() {
   updateConnectionStatus(true);
 }
 
-// ── Feature Handlers ─────────────────────────────────────────────────────────
+// ── Offline Detection ─────────────────────────────────────────────────────────
+// Kyun: Agar user offline hai aur AI call kare, toh network error aata tha
+// bina kisi proper message ke. Ab instant feedback milta hai.
 
+/**
+ * Show or hide the offline warning banner
+ * @param {boolean} offline - True if user is currently offline
+ */
+function setOfflineBanner(offline) {
+  let banner = $("offline-banner");
+
+  if (!banner) {
+    // Create banner if not in HTML — graceful degradation
+    banner = document.createElement("div");
+    banner.id = "offline-banner";
+    banner.setAttribute("role", "alert");
+    banner.setAttribute("aria-live", "assertive");
+    banner.style.cssText = `
+      display:none; position:fixed; top:var(--topbar-height); left:0; right:0;
+      z-index:500; background:var(--color-yellow-light);
+      border-bottom:1px solid var(--color-yellow-border);
+      color:#92400e; text-align:center;
+      padding:var(--space-2) var(--space-4);
+      font-size:var(--text-sm); font-weight:var(--weight-medium);
+    `;
+    banner.textContent = "⚠️ Internet nahi hai — AI features kaam nahi karenge";
+    document.body.prepend(banner);
+  }
+
+  banner.style.display = offline ? "block" : "none";
+}
+
+/**
+ * Initialize offline/online event listeners
+ */
+function initOfflineDetection() {
+  setOfflineBanner(!navigator.onLine);
+  window.addEventListener("online",  () => setOfflineBanner(false));
+  window.addEventListener("offline", () => setOfflineBanner(true));
+}
+
+// ── Feature Handlers ──────────────────────────────────────────────────────────
+
+/**
+ * Handle Resume Analyzer button click
+ */
 async function handleAnalyzeResume() {
   const pastedText = $v("resume-text");
   const text = state.resumeText || pastedText;
@@ -189,8 +235,11 @@ async function handleAnalyzeResume() {
   setBtn("resume-btn", false, "🔍 Analyze Resume");
 }
 
+/**
+ * Handle JD Matcher button click
+ */
 async function handleMatchJD() {
-  const jd = $v("jd-text");
+  const jd     = $v("jd-text");
   const resume = state.jdResumeText || $v("jd-resume-text");
 
   if (!jd) { showError("jd-error", "Job Description paste karo!"); return; }
@@ -212,6 +261,10 @@ async function handleMatchJD() {
   setBtn("jd-btn", false, "🎯 Match Karo & Analyze");
 }
 
+/**
+ * Handle Generate Question button click
+ * @param {boolean} [forceNew=false] - Force a different question
+ */
 async function handleGenerateQuestion(forceNew = false) {
   const role = $v("int-role");
   const type = $v("int-type");
@@ -254,6 +307,9 @@ async function handleGenerateQuestion(forceNew = false) {
   setBtn("gen-btn", false, "❓ Generate Question");
 }
 
+/**
+ * Handle Get AI Feedback button click
+ */
 async function handleGetFeedback() {
   const answer = $v("user-answer");
   if (!answer) { showError("int-error", "Pehle apna jawab likho!"); return; }
@@ -265,7 +321,7 @@ async function handleGetFeedback() {
   const stop = startProgress("int-bar", "int-progress", 2500);
   $("chat-container").innerHTML = "";
 
-  // XSS-safe — escapeHtml user input before inserting
+  // XSS-safe — user input escaped before DOM insertion
   addChatMsg("chat-container", "user", escapeHtml(answer));
 
   try {
@@ -294,6 +350,9 @@ async function handleGetFeedback() {
   setBtn("feedback-btn", false, "💬 Get AI Feedback");
 }
 
+/**
+ * Handle Expected Answer (Tips) button click
+ */
 async function handleGetTips() {
   const role = $v("int-role");
   const type = $v("int-type");
@@ -318,7 +377,8 @@ async function handleGetTips() {
 }
 
 /**
- * Render interview history list
+ * Render interview history from localStorage
+ * Uses escapeHtml on all stored user data before DOM insertion
  */
 function renderHistory() {
   const container = $("history-list");
@@ -336,7 +396,7 @@ function renderHistory() {
       <div class="history-details" style="display:none;margin-top:var(--space-2);">
         <p><strong>Question:</strong> ${escapeHtml(s.question)}</p>
         <p><strong>Answer:</strong> ${escapeHtml(s.answer)}</p>
-        <p><strong>Feedback:</strong> ${s.feedback}</p>
+        <div><strong>Feedback:</strong> ${s.feedback}</div>
       </div>
     </div>
   `).join("");
@@ -346,11 +406,67 @@ function renderHistory() {
       const details = item.querySelector(".history-details");
       if (details) details.style.display = details.style.display === "none" ? "block" : "none";
     });
+
+    // Keyboard nav — Enter/Space to toggle history item
+    item.setAttribute("tabindex", "0");
+    item.setAttribute("role", "button");
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        item.click();
+      }
+    });
   });
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ── Dark Mode ─────────────────────────────────────────────────────────────────
+
+/**
+ * Apply light or dark theme to the document
+ * @param {boolean} dark - True for dark mode
+ */
+function applyTheme(dark) {
+  const themeIcon = $("theme-icon");
+  if (dark) {
+    document.documentElement.setAttribute("data-theme", "dark");
+    if (themeIcon) themeIcon.textContent = "☀️";
+    localStorage.setItem("theme", "dark");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    if (themeIcon) themeIcon.textContent = "🌙";
+    localStorage.setItem("theme", "light");
+  }
+}
+
+// ── Mobile Sidebar ────────────────────────────────────────────────────────────
+
+/**
+ * Open mobile sidebar drawer
+ * @param {HTMLElement} sidebar
+ * @param {HTMLElement} overlay
+ */
+function openSidebar(sidebar, overlay) {
+  sidebar?.classList.add("sidebar--open");
+  overlay?.classList.add("sidebar-overlay--visible");
+}
+
+/**
+ * Close mobile sidebar drawer
+ * @param {HTMLElement} sidebar
+ * @param {HTMLElement} overlay
+ */
+function closeSidebar(sidebar, overlay) {
+  sidebar?.classList.remove("sidebar--open");
+  overlay?.classList.remove("sidebar-overlay--visible");
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Bootstrap the application — runs after DOMContentLoaded
+ */
 function init() {
+  // API Key
   state.apiKey = getApiKey();
   updateConnectionStatus(!!state.apiKey);
   if (!state.apiKey) apiModal.show();
@@ -360,7 +476,7 @@ function init() {
     el.addEventListener("click", () => showPanel(el.dataset.panel))
   );
 
-  // API Key modal
+  // API Key modal events
   $("save-api-btn")?.addEventListener("click", saveApiKey);
   $("skip-api-btn")?.addEventListener("click", () => apiModal.hide());
   $("api-key-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") saveApiKey(); });
@@ -377,57 +493,46 @@ function init() {
   $("tips-btn")?.addEventListener("click", handleGetTips);
 
   // Drop zones
-  initDropZone({ zoneId: "resume-drop-zone", inputId: "resume-file-input", fileNameId: "resume-file-name", onExtract: (text) => { state.resumeText = text; } });
-  initDropZone({ zoneId: "jd-drop-zone", inputId: "jd-file-input", fileNameId: "jd-file-name", onExtract: (text) => { state.jdResumeText = text; } });
+  initDropZone({
+    zoneId: "resume-drop-zone", inputId: "resume-file-input",
+    fileNameId: "resume-file-name", onExtract: (text) => { state.resumeText = text; },
+  });
+  initDropZone({
+    zoneId: "jd-drop-zone", inputId: "jd-file-input",
+    fileNameId: "jd-file-name", onExtract: (text) => { state.jdResumeText = text; },
+  });
 
   // History
   $("clear-history-btn")?.addEventListener("click", () => { clearHistory(); renderHistory(); });
   renderHistory();
 
-  // ── Mobile Hamburger ────────────────────────────────────
+  // ── Mobile Hamburger ──────────────────────────────────
   const hamburger = $("hamburger-btn");
-  const sidebar = document.querySelector(".sidebar");
-  const overlay = $("sidebar-overlay");
-
-  function openSidebar() {
-    sidebar?.classList.add("sidebar--open");
-    overlay?.classList.add("sidebar-overlay--visible");
-  }
-  function closeSidebar() {
-    sidebar?.classList.remove("sidebar--open");
-    overlay?.classList.remove("sidebar-overlay--visible");
-  }
+  const sidebar   = document.querySelector(".sidebar");
+  const sidebarOverlay = $("sidebar-overlay");
 
   hamburger?.addEventListener("click", () => {
-    sidebar?.classList.contains("sidebar--open") ? closeSidebar() : openSidebar();
+    sidebar?.classList.contains("sidebar--open")
+      ? closeSidebar(sidebar, sidebarOverlay)
+      : openSidebar(sidebar, sidebarOverlay);
   });
-  overlay?.addEventListener("click", closeSidebar);
+  sidebarOverlay?.addEventListener("click", () => closeSidebar(sidebar, sidebarOverlay));
   document.querySelectorAll(".nav-item").forEach((item) => {
-    item.addEventListener("click", () => { if (window.innerWidth <= 768) closeSidebar(); });
+    item.addEventListener("click", () => {
+      if (window.innerWidth <= 768) closeSidebar(sidebar, sidebarOverlay);
+    });
   });
 
-  // ── Dark Mode ───────────────────────────────────────────
-  const themeToggle = $("theme-toggle");
-  const themeIcon   = $("theme-icon");
-
-  function applyTheme(dark) {
-    if (dark) {
-      document.documentElement.setAttribute("data-theme", "dark");
-      if (themeIcon) themeIcon.textContent = "☀️";
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      if (themeIcon) themeIcon.textContent = "🌙";
-      localStorage.setItem("theme", "light");
-    }
-  }
-
+  // ── Dark Mode ─────────────────────────────────────────
   applyTheme(localStorage.getItem("theme") === "dark");
-  themeToggle?.addEventListener("click", () => {
+  $("theme-toggle")?.addEventListener("click", () => {
     applyTheme(document.documentElement.getAttribute("data-theme") !== "dark");
   });
 
-  // ── Feedback Widget — inside init, after DOM ready ──────
+  // ── Offline Detection ─────────────────────────────────
+  initOfflineDetection();
+
+  // ── Feedback Widget ───────────────────────────────────
   initFeedbackWidget();
 }
 
