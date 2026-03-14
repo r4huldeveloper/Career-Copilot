@@ -1,0 +1,325 @@
+/**
+ * tests.js — Edge Case Test Suite
+ * Run in browser console or Node with jsdom.
+ * Kyun tests: Elite codebase mein untested code nahi hota.
+ * Yeh tests regressions rokenge jab contributors changes karein.
+ *
+ * Usage (browser):
+ *   import { runTests } from "./tests.js";
+ *   runTests();
+ *
+ * Usage (check in console):
+ *   All passing tests log green ✅, failures log red ❌
+ */
+
+// ── Test Runner ───────────────────────────────────────────────────────────────
+
+let _passed = 0;
+let _failed = 0;
+
+/**
+ * Assert a condition is truthy
+ * @param {string} name - Test name
+ * @param {boolean} condition
+ */
+function assert(name, condition) {
+  if (condition) {
+    console.log(`%c✅ ${name}`, "color: green");
+    _passed++;
+  } else {
+    console.error(`❌ ${name}`);
+    _failed++;
+  }
+}
+
+/**
+ * Assert two values are strictly equal
+ * @param {string} name
+ * @param {*} actual
+ * @param {*} expected
+ */
+function assertEqual(name, actual, expected) {
+  const ok = actual === expected;
+  if (ok) {
+    console.log(`%c✅ ${name}`, "color: green");
+    _passed++;
+  } else {
+    console.error(`❌ ${name} — expected: ${JSON.stringify(expected)}, got: ${JSON.stringify(actual)}`);
+    _failed++;
+  }
+}
+
+// ── markdown.js tests ─────────────────────────────────────────────────────────
+
+import { parseMarkdown } from "./utils/markdown.js";
+
+function testMarkdown() {
+  console.group("📝 markdown.js");
+
+  // XSS prevention — most critical
+  const xssInput  = '<script>alert("xss")</script>';
+  const xssOutput = parseMarkdown(xssInput);
+  assert("XSS: script tag escaped", !xssOutput.includes("<script>"));
+  assert("XSS: &lt; present", xssOutput.includes("&lt;"));
+
+  // Headings
+  const h2 = parseMarkdown("## Hello World");
+  assert("H2 renders", h2.includes("<h2>Hello World</h2>"));
+
+  const h3 = parseMarkdown("### Sub heading");
+  assert("H3 renders", h3.includes("<h3>Sub heading</h3>"));
+
+  // Bold
+  const bold = parseMarkdown("**important**");
+  assert("Bold renders", bold.includes("<strong>important</strong>"));
+
+  // List items
+  const list = parseMarkdown("- item one\n- item two");
+  assert("List items render", list.includes("<li>item one</li>"));
+  assert("List wrapped in ul", list.includes("<ul>"));
+
+  // Empty input
+  assertEqual("Empty string returns empty", parseMarkdown(""), "");
+  assertEqual("Null-ish returns empty", parseMarkdown(null), "");
+
+  // No double-wrapping of lists
+  const multiList = parseMarkdown("- a\n- b\n- c");
+  const ulCount = (multiList.match(/<ul>/g) || []).length;
+  assertEqual("Single ul wrap for consecutive items", ulCount, 1);
+
+  console.groupEnd();
+}
+
+// ── storage.js tests ──────────────────────────────────────────────────────────
+
+import {
+  getApiKey, setApiKey, clearApiKey,
+  saveSession, getHistory, clearHistory,
+  saveScore, getScores, clearScores,
+  getTheme, setTheme,
+} from "./utils/storage.js";
+
+function testStorage() {
+  console.group("💾 storage.js");
+
+  // Cleanup before tests
+  clearApiKey();
+  clearHistory();
+  clearScores();
+
+  // API Key
+  assertEqual("getApiKey empty initially", getApiKey(), "");
+  setApiKey("gsk_testkey123");
+  assertEqual("setApiKey + getApiKey round-trip", getApiKey(), "gsk_testkey123");
+  clearApiKey();
+  assertEqual("clearApiKey resets to empty", getApiKey(), "");
+
+  // Theme
+  setTheme("dark");
+  assertEqual("setTheme dark", getTheme(), "dark");
+  setTheme("light");
+  assertEqual("setTheme light", getTheme(), "light");
+
+  // History
+  assertEqual("getHistory empty initially", getHistory().length, 0);
+
+  saveSession({ date: new Date().toISOString(), role: "APM", type: "Behavioral", question: "Q1", answer: "A1", feedback: "F1", score: "N/A" });
+  assertEqual("saveSession adds 1", getHistory().length, 1);
+
+  saveSession({ date: new Date().toISOString(), role: "BA", type: "Case", question: "Q2", answer: "A2", feedback: "F2", score: "N/A" });
+  assertEqual("saveSession adds 2", getHistory().length, 2);
+
+  // Newest first
+  assertEqual("Newest session first", getHistory()[0].role, "BA");
+
+  // History cap at MAX_HISTORY_SESSIONS
+  clearHistory();
+  for (let i = 0; i < 55; i++) {
+    saveSession({ date: new Date().toISOString(), role: `Role ${i}`, type: "T", question: "Q", answer: "A", feedback: "F", score: "N/A" });
+  }
+  assert("History capped at 50", getHistory().length <= 50);
+
+  clearHistory();
+  assertEqual("clearHistory empties", getHistory().length, 0);
+
+  // Scores
+  assertEqual("getScores empty initially", getScores().length, 0);
+
+  saveScore({ date: new Date().toISOString(), role: "APM", atsScore: 7 });
+  assertEqual("saveScore adds 1", getScores().length, 1);
+
+  saveScore({ date: new Date().toISOString(), role: "BA", atsScore: 9 });
+  assertEqual("saveScore adds 2", getScores().length, 2);
+  assertEqual("Latest score first", getScores()[0].atsScore, 9);
+
+  clearScores();
+  assertEqual("clearScores empties", getScores().length, 0);
+
+  console.groupEnd();
+}
+
+// ── ATS Score Parser tests ────────────────────────────────────────────────────
+// Tests for parseAtsScore logic (inline — not exported, so we replicate logic)
+
+function parseAtsScore(text) {
+  const match = text.match(/ATS\s*SCORE[:\s]*(\d+)\s*\/\s*10/i);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+function testAtsScoreParser() {
+  console.group("📊 ATS Score Parser");
+
+  assertEqual("Standard format", parseAtsScore("## 📊 ATS SCORE: 7/10"), 7);
+  assertEqual("With spaces", parseAtsScore("ATS SCORE : 8 / 10"), 8);
+  assertEqual("Lowercase", parseAtsScore("ats score: 6/10"), 6);
+  assertEqual("Score 10", parseAtsScore("ATS SCORE: 10/10"), 10);
+  assertEqual("Score 1", parseAtsScore("ATS SCORE: 1/10"), 1);
+  assertEqual("No score returns null", parseAtsScore("No score here"), null);
+  assertEqual("Empty string returns null", parseAtsScore(""), null);
+
+  console.groupEnd();
+}
+
+// ── escapeHtml tests ──────────────────────────────────────────────────────────
+// Tests for XSS prevention (inline — replicate logic)
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function testEscapeHtml() {
+  console.group("🔒 escapeHtml (XSS prevention)");
+
+  assertEqual("& escaped",  escapeHtml("a & b"),     "a &amp; b");
+  assertEqual("< escaped",  escapeHtml("<script>"),   "&lt;script&gt;");
+  assertEqual("> escaped",  escapeHtml(">div<"),      "&gt;div&lt;");
+  assertEqual('" escaped',  escapeHtml('"value"'),    "&quot;value&quot;");
+  assertEqual("' escaped",  escapeHtml("it's"),       "it&#039;s");
+  assertEqual("Full XSS",   escapeHtml('<img src=x onerror="alert(1)">'),
+    "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
+  assertEqual("Numbers pass through", escapeHtml("123"), "123");
+  assertEqual("Empty string", escapeHtml(""), "");
+  // Non-string coerced
+  assertEqual("Number coerced", escapeHtml(42), "42");
+
+  console.groupEnd();
+}
+
+// ── scoreTracker.js tests ─────────────────────────────────────────────────────
+
+import { renderScoreTracker } from "./components/scoreTracker.js";
+
+function testScoreTracker() {
+  console.group("📈 scoreTracker.js");
+
+  clearScores();
+
+  // Empty state
+  const emptyDiv = document.createElement("div");
+  renderScoreTracker(emptyDiv);
+  assert("Empty state renders empty message", emptyDiv.innerHTML.includes("score-tracker__empty"));
+
+  // With scores
+  saveScore({ date: new Date().toISOString(), role: "APM", atsScore: 8 });
+  saveScore({ date: new Date().toISOString(), role: "BA",  atsScore: 6 });
+
+  const filledDiv = document.createElement("div");
+  renderScoreTracker(filledDiv);
+  assert("Stats section renders", filledDiv.innerHTML.includes("score-tracker__stats"));
+  assert("List renders", filledDiv.innerHTML.includes("score-tracker__list"));
+  assert("Latest badge on first", filledDiv.innerHTML.includes("LATEST"));
+  assert("Role name present", filledDiv.innerHTML.includes("APM") || filledDiv.innerHTML.includes("BA"));
+
+  // XSS in stored role name
+  clearScores();
+  saveScore({ date: new Date().toISOString(), role: '<script>alert("xss")</script>', atsScore: 5 });
+  const xssDiv = document.createElement("div");
+  renderScoreTracker(xssDiv);
+  assert("XSS in role name escaped", !xssDiv.innerHTML.includes("<script>"));
+
+  // Null container — should not throw
+  let threw = false;
+  try { renderScoreTracker(null); } catch { threw = true; }
+  assert("Null container does not throw", !threw);
+
+  clearScores();
+  console.groupEnd();
+}
+
+// ── historyList.js tests ──────────────────────────────────────────────────────
+
+import { renderHistoryList } from "./components/historyList.js";
+
+function testHistoryList() {
+  console.group("📜 historyList.js");
+
+  clearHistory();
+
+  // Empty state
+  const emptyDiv = document.createElement("div");
+  renderHistoryList(emptyDiv);
+  assert("Empty state renders message", emptyDiv.innerHTML.includes("history-list__empty"));
+
+  // With sessions
+  saveSession({ date: new Date().toISOString(), role: "APM", type: "Behavioral", question: "Q?", answer: "My answer", feedback: "<p>Good</p>", score: "N/A" });
+
+  const filledDiv = document.createElement("div");
+  renderHistoryList(filledDiv);
+  assert("History item renders", filledDiv.innerHTML.includes("history-item"));
+  assert("Role shown", filledDiv.innerHTML.includes("APM"));
+  assert("Details hidden by default", filledDiv.innerHTML.includes('hidden'));
+  assert("Keyboard tabindex set", filledDiv.innerHTML.includes('tabindex="0"'));
+  assert("Aria-expanded set", filledDiv.innerHTML.includes('aria-expanded="false"'));
+
+  // XSS in stored question
+  clearHistory();
+  saveSession({ date: new Date().toISOString(), role: "BA", type: "T", question: '<img src=x onerror="xss">', answer: "ans", feedback: "fb", score: "N/A" });
+  const xssDiv = document.createElement("div");
+  renderHistoryList(xssDiv);
+  assert("XSS in question escaped", !xssDiv.innerHTML.includes('<img src=x onerror'));
+
+  // Null container — should not throw
+  let threw = false;
+  try { renderHistoryList(null); } catch { threw = true; }
+  assert("Null container does not throw", !threw);
+
+  clearHistory();
+  console.groupEnd();
+}
+
+// ── Main Runner ───────────────────────────────────────────────────────────────
+
+/**
+ * Run all tests and print summary
+ * @returns {{ passed: number, failed: number }}
+ */
+export function runTests() {
+  _passed = 0;
+  _failed = 0;
+
+  console.group("🧪 Career Copilot — Test Suite");
+  console.log("Running edge case tests...\n");
+
+  testMarkdown();
+  testStorage();
+  testAtsScoreParser();
+  testEscapeHtml();
+  testScoreTracker();
+  testHistoryList();
+
+  console.groupEnd();
+
+  const total = _passed + _failed;
+  if (_failed === 0) {
+    console.log(`%c\n✅ All ${total} tests passed`, "color: green; font-weight: bold; font-size: 14px");
+  } else {
+    console.error(`\n❌ ${_failed} failed, ${_passed} passed (${total} total)`);
+  }
+
+  return { passed: _passed, failed: _failed };
+}

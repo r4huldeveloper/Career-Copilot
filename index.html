@@ -68,6 +68,7 @@
       <button class="btn btn--primary btn--full" id="save-api-btn">
         Save &amp; Start Using →
       </button>
+      <div id="api-key-error" class="hidden inline-error" style="text-align:center;"></div>
       <button class="btn btn--ghost btn--full" id="skip-api-btn"
         style="margin-top:var(--space-2);font-size:var(--text-sm);color:var(--color-text-muted);">Explore first, connect
         later →</button>
@@ -132,6 +133,9 @@
       <div class="nav-item" id="nav-history" data-panel="history">
         <span class="nav-item__icon">📜</span> Interview History
       </div>
+      <div class="nav-item" id="nav-scores" data-panel="scores">
+        <span class="nav-item__icon">📈</span> Score Tracker
+      </div>
 
       <div class="sidebar__api-card hidden" id="sidebar-api-card">
         <strong>⚠️ API Key Missing</strong>
@@ -176,86 +180,34 @@
         <div class="grid-2">
           <div class="card card--clickable" data-panel="resume">
             <div class="card__body">
-              <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                📄
-              </div>
-              <div class="card__title" style="margin-bottom: var(--space-2)">
-                Resume Analyzer
-              </div>
-              <p style="
-                    font-size: var(--text-sm);
-                    color: var(--color-text-muted);
-                    line-height: 1.5;
-                    margin: 0;
-                  ">
-                ATS score, PM/BA rewrite, aur actionable improvements.
-              </p>
-              <div style="margin-top: var(--space-4)">
-                <span class="tag tag--blue">Most Used</span>
-              </div>
+              <div class="feature-card__icon">📄</div>
+              <div class="card__title feature-card__title">Resume Analyzer</div>
+              <p class="feature-card__desc">ATS score, PM/BA rewrite, aur actionable improvements.</p>
+              <div class="feature-card__tag"><span class="tag tag--blue">Most Used</span></div>
             </div>
           </div>
           <div class="card card--clickable" data-panel="jd">
             <div class="card__body">
-              <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                🎯
-              </div>
-              <div class="card__title" style="margin-bottom: var(--space-2)">
-                JD Matcher
-              </div>
-              <p style="
-                    font-size: var(--text-sm);
-                    color: var(--color-text-muted);
-                    line-height: 1.5;
-                    margin: 0;
-                  ">
-                JD paste karo — exact gaps aur corrections pao.
-              </p>
-              <div style="margin-top: var(--space-4)">
-                <span class="tag tag--green">High Impact</span>
-              </div>
+              <div class="feature-card__icon">🎯</div>
+              <div class="card__title feature-card__title">JD Matcher</div>
+              <p class="feature-card__desc">JD paste karo — exact gaps aur corrections pao.</p>
+              <div class="feature-card__tag"><span class="tag tag--green">High Impact</span></div>
             </div>
           </div>
           <div class="card card--clickable" data-panel="interview">
             <div class="card__body">
-              <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                🎤
-              </div>
-              <div class="card__title" style="margin-bottom: var(--space-2)">
-                Mock Interview
-              </div>
-              <p style="
-                    font-size: var(--text-sm);
-                    color: var(--color-text-muted);
-                    line-height: 1.5;
-                    margin: 0;
-                  ">
-                Real questions, apna jawab likho, detailed feedback pao.
-              </p>
-              <div style="margin-top: var(--space-4)">
-                <span class="tag tag--yellow">Interactive</span>
-              </div>
+              <div class="feature-card__icon">🎤</div>
+              <div class="card__title feature-card__title">Mock Interview</div>
+              <p class="feature-card__desc">Real questions, apna jawab likho, detailed feedback pao.</p>
+              <div class="feature-card__tag"><span class="tag tag--yellow">Interactive</span></div>
             </div>
           </div>
           <div class="card">
             <div class="card__body">
-              <div style="font-size: 28px; margin-bottom: var(--space-3)">
-                🔒
-              </div>
-              <div class="card__title" style="margin-bottom: var(--space-2)">
-                100% Private
-              </div>
-              <p style="
-                    font-size: var(--text-sm);
-                    color: var(--color-text-muted);
-                    line-height: 1.5;
-                    margin: 0;
-                  ">
-                Tera data kisi server pe save nahi hota. Sirf browser mein.
-              </p>
-              <div style="margin-top: var(--space-4)">
-                <span class="tag tag--green">Zero Data Storage</span>
-              </div>
+              <div class="feature-card__icon">🔒</div>
+              <div class="card__title feature-card__title">100% Private</div>
+              <p class="feature-card__desc">Tera data kisi server pe save nahi hota. Sirf browser mein.</p>
+              <div class="feature-card__tag"><span class="tag tag--green">Zero Data Storage</span></div>
             </div>
           </div>
         </div>
@@ -362,76 +314,15 @@
 
               <!-- Right: What you'll get + CTA -->
               <div>
-                <p style="
-                      font-size: var(--text-xs);
-                      font-weight: var(--weight-bold);
-                      color: var(--color-text-secondary);
-                      text-transform: uppercase;
-                      letter-spacing: 0.5px;
-                      margin-bottom: var(--space-4);
-                    ">
-                  What You'll Get
-                </p>
-                <div style="
-                      display: flex;
-                      flex-direction: column;
-                      gap: var(--space-3);
-                      margin-bottom: var(--space-6);
-                    ">
-                  <div style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      ">
-                    <span style="color: var(--color-green)">✓</span> Top 3
-                    strengths &amp; weaknesses
-                  </div>
-                  <div style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      ">
-                    <span style="color: var(--color-green)">✓</span> ATS score
-                    with explanation
-                  </div>
-                  <div style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      ">
-                    <span style="color: var(--color-green)">✓</span> 3 quick
-                    fixes for today
-                  </div>
-                  <div style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      ">
-                    <span style="color: var(--color-green)">✓</span> Rewritten
-                    bullets in role-specific language
-                  </div>
-                  <div style="
-                        display: flex;
-                        gap: var(--space-3);
-                        align-items: flex-start;
-                        font-size: var(--text-sm);
-                        color: var(--color-text-secondary);
-                      ">
-                    <span style="color: var(--color-green)">✓</span> Hinglish
-                    mein — easy to understand
-                  </div>
+                <p class="what-youll-get__label">What You'll Get</p>
+                <div class="what-youll-get">
+                  <div class="what-youll-get__item"><span class="what-youll-get__check">✓</span> Top 3 strengths &amp; weaknesses</div>
+                  <div class="what-youll-get__item"><span class="what-youll-get__check">✓</span> ATS score with explanation</div>
+                  <div class="what-youll-get__item"><span class="what-youll-get__check">✓</span> 3 quick fixes for today</div>
+                  <div class="what-youll-get__item"><span class="what-youll-get__check">✓</span> Rewritten bullets in role-specific language</div>
+                  <div class="what-youll-get__item"><span class="what-youll-get__check">✓</span> Hinglish mein — easy to understand</div>
                 </div>
-                <button class="btn btn--primary btn--full" id="resume-btn">
-                  🔍 Analyze Resume
-                </button>
+                <button class="btn btn--primary btn--full" id="resume-btn">🔍 Analyze Resume</button>
                 <div class="loading-bar mt-3" id="resume-progress">
                   <div class="loading-bar__fill" id="resume-bar"></div>
                 </div>
@@ -440,12 +331,40 @@
           </div>
         </div>
 
+        <div id="resume-error" class="hidden inline-error"></div>
+
         <div class="result-box" id="resume-result">
           <div class="result-box__header">
             <span class="result-box__title">📊 Analysis Results</span>
             <span class="tag tag--green">Complete</span>
           </div>
           <div class="result-box__body" id="resume-result-content"></div>
+        </div>
+
+        <!-- AI ROLE FIT — revealed after Resume Analyzer completes -->
+        <div id="role-fit-section" style="display:none;margin-top:var(--space-6);">
+          <div class="card role-fit-card">
+            <div class="card__body">
+              <div class="role-fit-card__inner">
+                <div class="role-fit-card__icon">🎯</div>
+                <div class="flex-1">
+                  <div class="role-fit-card__title">AI Role Fit Analyzer</div>
+                  <p class="role-fit-card__desc">Tera resume kis role ke liye actually best fit hai? Top 3 roles with match %, 90-day roadmap, aur honest gap analysis.</p>
+                  <button class="btn btn--primary" id="role-fit-btn">🎯 Find My Best Roles</button>
+                  <div class="loading-bar mt-3" id="role-fit-progress">
+                    <div class="loading-bar__fill" id="role-fit-bar"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="result-box mt-4" id="role-fit-result">
+            <div class="result-box__header">
+              <span class="result-box__title">🎯 Role Fit Analysis</span>
+              <span class="tag tag--purple">AI Powered</span>
+            </div>
+            <div class="result-box__body" id="role-fit-result-content"></div>
+          </div>
         </div>
       </section>
 
@@ -510,6 +429,7 @@
           </div>
         </div>
 
+        <div id="jd-error" class="hidden inline-error"></div>
         <div class="result-box" id="jd-result">
           <div class="result-box__header">
             <span class="result-box__title">🎯 Match Analysis</span>
@@ -645,23 +565,32 @@
         </div>
 
         <!-- Chat output -->
+        <div id="int-error" class="hidden inline-error"></div>
         <div class="chat" id="chat-container"></div>
       </section>
 
+      <!-- ── INTERVIEW HISTORY ──────────────────────────────────────────────── -->
       <section class="panel" id="panel-history">
-        <div class="page-header" style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            ">
-          <h2 class="page-title">Interview History</h2>
-          <button class="btn btn--secondary btn--sm" id="clear-history-btn">
-            Clear History
-          </button>
+        <div class="page-header-row">
+          <div class="page-header">
+            <h2 class="page-title">Interview History</h2>
+            <p class="page-desc">Past mock interview sessions — click to expand.</p>
+          </div>
+          <button class="btn btn--secondary btn--sm" id="clear-history-btn">Clear History</button>
         </div>
-        <div id="history-list" style="margin-top: var(--space-4)">
-          <!-- JS will render past sessions here -->
+        <div id="history-list" class="mt-4"></div>
+      </section>
+
+      <!-- ── SCORE TRACKER ──────────────────────────────────────────────────── -->
+      <section class="panel" id="panel-scores">
+        <div class="page-header-row">
+          <div class="page-header">
+            <h2 class="page-title">📈 Score Tracker</h2>
+            <p class="page-desc">Tera ATS score history — resume improve ho raha hai ya nahi dekho.</p>
+          </div>
+          <button class="btn btn--secondary btn--sm" id="clear-scores-btn">Clear Scores</button>
         </div>
+        <div id="score-tracker-list" class="mt-4"></div>
       </section>
     </main>
   </div>

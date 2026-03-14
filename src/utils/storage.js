@@ -1,96 +1,100 @@
 /**
  * storage.js — LocalStorage wrapper
- * Handles all persistent browser storage with error safety.
- * Kyun: LocalStorage directly use karna risky hai — errors
- * silently fail karte hain. Yeh wrapper safe, logged, aur consistent banata hai.
+ * Single source of truth for ALL browser storage.
+ * Kyun: Direct localStorage calls scattered the codebase mein —
+ * theme localStorage.setItem directly app.js mein tha.
+ * Ab sab storage yahan se jaata hai — consistent, logged, safe.
  */
 
 import { CONFIG } from "../config.js";
 
+// ── Storage Keys — ek jagah, never scattered ──────────────────────────────────
 const KEYS = {
   API_KEY: "cc_groq_key",
   HISTORY: "cc_interview_history",
+  SCORES:  "cc_ats_scores",
+  THEME:   "theme",
 };
 
+// ── Core Wrapper ──────────────────────────────────────────────────────────────
+
 /**
- * Safe localStorage wrapper with logging
+ * Safe localStorage wrapper with error logging
+ * Kyun wrapper: Direct localStorage throws in private/incognito mode
+ * aur quota exceed pe — wrapper gracefully handle karta hai
  */
 export const storage = {
   /**
-   * Get a value from localStorage
    * @param {string} key
    * @returns {string|null}
    */
   get(key) {
-    try {
-      return localStorage.getItem(key);
-    } catch (err) {
-      console.error("[storage] get failed:", key, err.message);
-      return null;
-    }
+    try { return localStorage.getItem(key); }
+    catch (err) { console.error("[storage] get failed:", key, err.message); return null; }
   },
 
   /**
-   * Set a value in localStorage
    * @param {string} key
    * @param {string} value
-   * @returns {boolean} - True if successful
+   * @returns {boolean}
    */
   set(key, value) {
-    try {
-      localStorage.setItem(key, value);
-      return true;
-    } catch (err) {
-      console.error("[storage] set failed:", key, err.message);
-      return false;
-    }
+    try { localStorage.setItem(key, value); return true; }
+    catch (err) { console.error("[storage] set failed:", key, err.message); return false; }
   },
 
   /**
-   * Remove a value from localStorage
    * @param {string} key
-   * @returns {boolean} - True if successful
+   * @returns {boolean}
    */
   remove(key) {
-    try {
-      localStorage.removeItem(key);
-      return true;
-    } catch (err) {
-      console.error("[storage] remove failed:", key, err.message);
-      return false;
-    }
+    try { localStorage.removeItem(key); return true; }
+    catch (err) { console.error("[storage] remove failed:", key, err.message); return false; }
   },
 };
 
 // ── API Key ───────────────────────────────────────────────────────────────────
 
 /** @returns {string} Stored Groq API key or empty string */
-export const getApiKey = () => storage.get(KEYS.API_KEY) || "";
+export const getApiKey  = () => storage.get(KEYS.API_KEY) || "";
 
-/** @param {string} key - Groq API key to persist */
+/** @param {string} key — Groq API key to persist */
 export const setApiKey  = (key) => storage.set(KEYS.API_KEY, key);
 
-/** Clear stored API key */
+/** Remove stored API key */
 export const clearApiKey = () => storage.remove(KEYS.API_KEY);
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+// Kyun yahan: app.js mein localStorage.setItem("theme") directly tha —
+// inconsistent. Ab sab storage ek jagah se.
+
+/**
+ * Get saved theme preference
+ * @returns {"dark"|"light"|null}
+ */
+export const getTheme = () => storage.get(KEYS.THEME);
+
+/**
+ * Save theme preference
+ * @param {"dark"|"light"} theme
+ */
+export const setTheme = (theme) => storage.set(KEYS.THEME, theme);
 
 // ── Interview Session History ─────────────────────────────────────────────────
 
 /**
- * Save an interview session to history
- * Caps at CONFIG.MAX_HISTORY_SESSIONS to prevent localStorage overflow
- * Kyun cap: Unlimited sessions would eventually fill localStorage (5MB limit)
- * @param {object} session - Session object with date, role, question, answer, feedback
+ * Save interview session — capped at CONFIG.MAX_HISTORY_SESSIONS
+ * Kyun cap: Unbounded growth would hit 5MB localStorage limit
+ * @param {object} session — { date, role, type, question, answer, feedback, score }
  */
 export function saveSession(session) {
   try {
-    const raw = storage.get(KEYS.HISTORY);
+    const raw     = storage.get(KEYS.HISTORY);
     const history = raw ? JSON.parse(raw) : [];
     history.unshift(session);
-
     if (history.length > CONFIG.MAX_HISTORY_SESSIONS) {
       history.splice(CONFIG.MAX_HISTORY_SESSIONS);
     }
-
     storage.set(KEYS.HISTORY, JSON.stringify(history));
   } catch (err) {
     console.error("[storage] saveSession failed:", err.message);
@@ -98,8 +102,8 @@ export function saveSession(session) {
 }
 
 /**
- * Get all saved interview sessions, newest first
- * @returns {object[]} Array of session objects
+ * Get all saved sessions, newest first
+ * @returns {object[]}
  */
 export function getHistory() {
   try {
@@ -111,7 +115,41 @@ export function getHistory() {
   }
 }
 
-/**
- * Clear all interview history from localStorage
- */
+/** Clear all interview history */
 export const clearHistory = () => storage.remove(KEYS.HISTORY);
+
+// ── ATS Score Tracker ─────────────────────────────────────────────────────────
+
+/**
+ * Save ATS score entry after each Resume Analyzer run
+ * Capped at 100 — score trend se zyada data needed nahi
+ * @param {{ date: string, role: string, atsScore: number }} entry
+ */
+export function saveScore(entry) {
+  try {
+    const raw    = storage.get(KEYS.SCORES);
+    const scores = raw ? JSON.parse(raw) : [];
+    scores.unshift(entry);
+    if (scores.length > 100) scores.splice(100);
+    storage.set(KEYS.SCORES, JSON.stringify(scores));
+  } catch (err) {
+    console.error("[storage] saveScore failed:", err.message);
+  }
+}
+
+/**
+ * Get all saved ATS scores, newest first
+ * @returns {{ date: string, role: string, atsScore: number }[]}
+ */
+export function getScores() {
+  try {
+    const raw = storage.get(KEYS.SCORES);
+    return raw ? JSON.parse(raw) : [];
+  } catch (err) {
+    console.error("[storage] getScores parse failed:", err.message);
+    return [];
+  }
+}
+
+/** Clear all score history */
+export const clearScores = () => storage.remove(KEYS.SCORES);

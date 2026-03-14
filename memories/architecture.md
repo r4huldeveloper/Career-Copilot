@@ -24,34 +24,38 @@
 ### Folder structure (tree format)
 ```
 Career-Copilot/
-+-- assets/
-+-- docs/
-�   +-- architecture.md
-+-- src/
-�   +-- app.js
-�   +-- config.js
-�   +-- api/groq.js
-�   +-- components/
-�   �   +-- feedback.js
-�   �   +-- fileUpload.js
-�   �   +-- modal.js
-�   �   +-- progressBar.js
-�   +-- styles/
-�   �   +-- variables.css
-�   �   +-- base.css
-�   �   +-- components.css
-�   �   +-- layout.css
-�   +-- utils/
-�       +-- pdfParser.js
-�       +-- markdown.js
-�       +-- storage.js
-+-- index.html
-+-- README.md
-+-- ROADMAP.md
-+-- CONTRIBUTING.md
-+-- LICENSE
-+-- vercel.json
-+-- .gitignore
+├── assets/                        # images, icons, logos, favicons, etc.
+├── docs/
+│   └── architecture.md            # large-scale architecture documentation
+├── src/
+│   ├── app.js                     # main orchestrator: wires events, delegates to components
+│   ├── config.js                  # ALL constants & configuration (no hardcoding elsewhere)
+│   ├── api/
+│   │   └── groq.js                # Groq API calls + elite prompts + sessionStorage caching
+│   ├── components/
+│   │   ├── feedback.js            # feedback widget (Web3Forms integration + rate limiting)
+│   │   ├── fileUpload.js          # drag & drop file upload handler
+│   │   ├── historyList.js         # renders interview/question history
+│   │   ├── modal.js               # generic modal controller
+│   │   ├── progressBar.js         # loading / progress animations
+│   │   └── scoreTracker.js        # ATS score display & tracking renderer
+│   ├── styles/
+│   │   ├── variables.css          # design tokens, colors, spacing, typography
+│   │   ├── base.css               # CSS reset + global styles
+│   │   ├── components.css         # component-specific styles + utility classes
+│   │   └── layout.css             # page layout, grid/flex, responsive breakpoints
+│   └── utils/
+│       ├── markdown.js            # markdown → HTML conversion + XSS escaping
+│       ├── pdfParser.js           # PDF text extraction (uses pdf.js lazy-loaded)
+│       └── storage.js             # localStorage / sessionStorage wrapper (theme, API key, history, scores)
+├── index.html                     # main entry point – markup only, zero logic, zero inline styles
+├── README.md                      # project overview, setup, usage
+├── ROADMAP.md                     # feature roadmap & future plans
+├── CONTRIBUTING.md                # contribution guidelines
+├── LICENSE                        # license file (likely MIT or similar)
+├── vercel.json                    # Vercel config + CSP headers + security settings
+├── .gitignore                     # git ignore rules
+└── src/tests.js                   # browser console test suite (edge cases)
 ```
 
 ### Data flow
