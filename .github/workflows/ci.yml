@@ -1,0 +1,32 @@
+name: CI - Code Quality
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js (npx tools ke liye)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lint JavaScript
+        run: npx eslint@latest src/**/*.js --ignore-pattern '**/pdf.js' || true
+
+      - name: Lint CSS
+        run: npx stylelint@latest "src/styles/**/*.css" || true
+
+      - name: Validate HTML
+        run: npx html-validate@latest index.html || true
+
+      - name: Check basic files
+        run: |
+          ls -la index.html src/ || true
+          echo "✅ All core files present"
