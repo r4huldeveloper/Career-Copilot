@@ -1,30 +1,47 @@
 /**
- * app.js — Main Application Controller
- * Responsibility: Wire events, manage state, delegate to components.
- * Kyun: Rendering logic components mein — app.js sirf orchestrate karta hai.
+ * app.js — Application Shell / Orchestrator
+ *
+ * AI_RULES compliance:
+ *   Rule 1 — UI Shell only: wires events, manages DOM state, delegates all
+ *             business logic to Pure Logic Layer (src/core/logic/*).
+ *   Rule 2 — Structural Lock: zero CSS class / HTML ID changes ever made here.
+ *   Rule 3 — Atomic: each handler is a thin bridge — logic lives elsewhere.
+ *
+ * This file's only job:
+ *   1. Listen for user events.
+ *   2. Read DOM inputs.
+ *   3. Call Pure Logic Layer with plain data.
+ *   4. Render returned data into the DOM.
+ *   5. Handle loading/error states.
+ *
+ * Business rules, validation thresholds, AI calls, storage writes —
+ * none of these live here anymore.
  */
 
-import { initFeedbackWidget }          from "./components/feedback.js";
-import { renderScoreTracker }          from "./components/scoreTracker.js";
-import { renderHistoryList }           from "./components/historyList.js";
+import { initFeedbackWidget }               from "./components/feedback.js";
+import { renderScoreTracker }               from "./components/scoreTracker.js";
+import { renderHistoryList }                from "./components/historyList.js";
 import {
-  saveSession, getApiKey, setApiKey,
-  saveScore, clearHistory, clearScores,
+  getApiKey, setApiKey,
+  clearHistory, clearScores,
   getTheme, setTheme,
-}                                       from "./utils/storage.js";
-import { parseMarkdown }               from "./utils/markdown.js";
-import { sanitizeUserText, clampTextLength } from "./utils/sanitize.js";
-import { startProgress, setProgressStep } from "./components/progressBar.js";
-import { initDropZone }                from "./components/fileUpload.js";
-import { createModal }                 from "./components/modal.js";
-import { GroqAdapter }              from "./adapters/aiProvider.js";
-import {
-  getSessionState, setSessionState,
-  resetSessionState, updateLastInterview,
-}                                       from "./core/logic/sessionState.js";
-import { CONFIG }                      from "./config.js";
+}                                           from "./utils/storage.js";
+import { parseMarkdown }                    from "./utils/markdown.js";
+import { sanitizeUserText }                 from "./utils/sanitize.js";
+import { startProgress, setProgressStep }   from "./components/progressBar.js";
+import { initDropZone }                     from "./components/fileUpload.js";
+import { createModal }                      from "./components/modal.js";
 
-// ── App State ─────────────────────────────────────────────────────────────────
+// Pure Logic Layer imports (AI_RULES Rule 1 — Abstract Intelligence Core)
+import { runResumeAnalysis, runRoleFitAnalysis } from "./core/logic/resumeLogic.js";
+import { runJdMatch }                            from "./core/logic/jdLogic.js";
+import {
+  runGenerateQuestion,
+  runEvaluateAnswer,
+  runGetAnswerTips,
+}                                                from "./core/logic/interviewLogic.js";
+
+// UI-only state — no business data, no AI results stored here
 const state = {
   apiKey:          "",
   resumeText:      "",
@@ -33,15 +50,10 @@ const state = {
   questionCount:   0,
 };
 
-// ── DOM Helpers ───────────────────────────────────────────────────────────────
+// DOM Helpers
 const $ = (id) => document.getElementById(id);
 const $v = (id) => $(id)?.value?.trim() || "";
 
-/**
- * Escape HTML — prevents XSS on any user-supplied string
- * @param {string} str
- * @returns {string}
- */
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -51,12 +63,6 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-/**
- * Show inline error — no alert() anywhere in codebase
- * Auto-hides after 5s. Adds role=alert for screen readers.
- * @param {string} elementId
- * @param {string} message
- */
 function showError(elementId, message) {
   const el = $(elementId);
   if (!el) return;
@@ -66,12 +72,6 @@ function showError(elementId, message) {
   setTimeout(() => el.classList.add("hidden"), 5000);
 }
 
-/**
- * Render AI result into result-box
- * @param {string} boxId
- * @param {string} contentId
- * @param {string} html
- */
 function showResult(boxId, contentId, html) {
   const box = $(boxId);
   if (!box) return;
@@ -80,12 +80,41 @@ function showResult(boxId, contentId, html) {
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/**
- * Append chat message to interview container
- * @param {string} containerId
- * @param {"ai"|"user"} role
- * @param {string} html
- */
+function setBtn(id, disabled, text) {
+  const btn = $(id);
+  if (!btn) return;
+  btn.disabled = disabled;
+  if (text) btn.textContent = text;
+}
+
+function showPanel(name) {
+  document.querySelectorAll(".panel").forEach((p) => p.classList.remove("panel--active"));
+  document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("nav-item--active"));
+  $("panel-" + name)?.classList.add("panel--active");
+  $("nav-" + name)?.classList.add("nav-item--active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showRoleFitControls() {
+  $("role-fit-section")?.classList.remove("hidden");
+  $("role-fit-tabs")?.classList.remove("hidden");
+}
+
+function setRoleFitMode(mode) {
+  const resumeBox  = $("resume-result");
+  const roleFitBox = $("role-fit-result");
+  const tabs       = $("role-fit-tabs");
+  if (mode === "resume") {
+    resumeBox?.classList.add("result-box--visible");
+    roleFitBox?.classList.remove("result-box--visible");
+    tabs?.classList.remove("hidden");
+  } else if (mode === "roleFit") {
+    resumeBox?.classList.remove("result-box--visible");
+    roleFitBox?.classList.add("result-box--visible");
+    tabs?.classList.remove("hidden");
+  }
+}
+
 function addChatMsg(containerId, role, html) {
   const container = $(containerId);
   if (!container) return;
@@ -99,37 +128,9 @@ function addChatMsg(containerId, role, html) {
   container.lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/**
- * Toggle button loading/idle state
- * @param {string} id
- * @param {boolean} disabled
- * @param {string} [text]
- */
-function setBtn(id, disabled, text) {
-  const btn = $(id);
-  if (!btn) return;
-  btn.disabled = disabled;
-  if (text) btn.textContent = text;
-}
-
-/**
- * Switch visible panel + active nav state
- * @param {string} name
- */
-function showPanel(name) {
-  document.querySelectorAll(".panel").forEach((p) => p.classList.remove("panel--active"));
-  document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("nav-item--active"));
-  $("panel-" + name)?.classList.add("panel--active");
-  $("nav-" + name)?.classList.add("nav-item--active");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
+// API Key
 const apiModal = createModal("setup-overlay");
 
-/**
- * Update topbar Groq connection indicator
- * @param {boolean} connected
- */
 function updateConnectionStatus(connected) {
   const dot    = $("api-dot");
   const status = $("api-status");
@@ -145,9 +146,6 @@ function updateConnectionStatus(connected) {
   }
 }
 
-/**
- * Validate and persist Groq API key
- */
 function saveApiKey() {
   const key = $v("api-key-input");
   if (!key.startsWith("gsk_")) {
@@ -160,25 +158,7 @@ function saveApiKey() {
   updateConnectionStatus(true);
 }
 
-// ── ATS Score Parser ──────────────────────────────────────────────────────────
-
-/**
- * Extract numeric ATS score from AI markdown output
- * @param {string} resultText
- * @returns {number|null}
- */
-function parseAtsScore(resultText) {
-  const match = resultText.match(/ATS\s*SCORE[:\s]*(\d+)\s*\/\s*10/i);
-  return match ? parseInt(match[1], 10) : null;
-}
-
-// ── Offline Detection ─────────────────────────────────────────────────────────
-
-/**
- * Show or hide offline warning banner
- * Kyun: Without this, user waited 30s for timeout with no feedback
- * @param {boolean} offline
- */
+// Offline Banner
 function setOfflineBanner(offline) {
   let banner = $("offline-banner");
   if (!banner) {
@@ -201,20 +181,13 @@ function setOfflineBanner(offline) {
   banner.style.display = offline ? "block" : "none";
 }
 
-/** Initialize online/offline listeners */
 function initOfflineDetection() {
   setOfflineBanner(!navigator.onLine);
   window.addEventListener("online",  () => setOfflineBanner(false));
   window.addEventListener("offline", () => setOfflineBanner(true));
 }
 
-// ── Dark Mode ─────────────────────────────────────────────────────────────────
-
-/**
- * Apply theme to document and persist via storage.js
- * Kyun storage.js: Direct localStorage.setItem tha — inconsistent
- * @param {boolean} dark
- */
+// Dark Mode
 function applyTheme(dark) {
   const themeIcon = $("theme-icon");
   if (dark) {
@@ -228,64 +201,39 @@ function applyTheme(dark) {
   }
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-
-/**
- * Open mobile sidebar drawer
- * @param {HTMLElement} sidebar
- * @param {HTMLElement} overlay
- */
+// Sidebar
 function openSidebar(sidebar, overlay) {
   sidebar?.classList.add("sidebar--open");
   overlay?.classList.add("sidebar-overlay--visible");
 }
-
-/**
- * Close mobile sidebar drawer
- * @param {HTMLElement} sidebar
- * @param {HTMLElement} overlay
- */
 function closeSidebar(sidebar, overlay) {
   sidebar?.classList.remove("sidebar--open");
   overlay?.classList.remove("sidebar-overlay--visible");
 }
 
-// ── Feature Handlers ──────────────────────────────────────────────────────────
+// Feature Handlers — thin UI bridges to Pure Logic Layer
 
-/**
- * Resume Analyzer — auto-saves ATS score, reveals Role Fit section
- */
 async function handleAnalyzeResume() {
   const rawText = state.resumeText || $v("resume-text");
-  const text = clampTextLength(sanitizeUserText(rawText), CONFIG.MAX_RESUME_LENGTH);
-  const role = sanitizeUserText($v("resume-role"));
-
-  if (!text || text.length < CONFIG.MIN_RESUME_LENGTH) {
-    showError("resume-error", "Resume upload karo ya paste karo pehle!");
-    return;
-  }
+  const role    = sanitizeUserText($v("resume-role"));
 
   setBtn("resume-btn", true, "Analyzing...");
   setProgressStep(["rs-1", "rs-2", "rs-3", "rs-4"], 2);
   const stop = startProgress("resume-bar", "resume-progress", 3000);
 
   try {
-    const result = await new GroqAdapter(state.apiKey).analyzeResume({ resumeText: text, targetRole: role });
-    setSessionState({ resumeText: text, lastRole: role });
+    const { result } = await runResumeAnalysis({
+      resumeText: rawText,
+      targetRole: role,
+      apiKey:     state.apiKey,
+    });
     stop();
     setProgressStep(["rs-1", "rs-2", "rs-3", "rs-4"], 4);
     showResult("resume-result", "resume-result-content", parseMarkdown(result));
-
-    // Auto-save ATS score — feeds Score Tracker without any user action
-    const atsScore = parseAtsScore(result);
-    if (atsScore !== null) {
-      saveScore({ date: new Date().toISOString(), role, atsScore });
-      renderScoreTracker($("score-tracker-list"));
-    }
-
-    // Reveal Role Fit section — only after analysis complete
-    $("role-fit-section")?.style.setProperty("display", "block");
-
+    renderScoreTracker($("score-tracker-list"));
+    showRoleFitControls();
+    setRoleFitMode("resume");
+    await handleAnalyzeRoleFit();
   } catch (err) {
     stop();
     console.error("[app] handleAnalyzeResume:", err.message);
@@ -295,26 +243,20 @@ async function handleAnalyzeResume() {
   setBtn("resume-btn", false, "🔍 Analyze Resume");
 }
 
-/**
- * AI Role Fit Analyzer — reuses already-uploaded resume text
- */
 async function handleAnalyzeRoleFit() {
   const rawText = state.resumeText || $v("resume-text");
-  const text = clampTextLength(sanitizeUserText(rawText), CONFIG.MAX_RESUME_LENGTH);
-
-  if (!text || text.length < CONFIG.MIN_RESUME_LENGTH) {
-    showError("resume-error", "Pehle resume analyze karo upar se!");
-    return;
-  }
 
   setBtn("role-fit-btn", true, "Finding Best Roles...");
   const stop = startProgress("role-fit-bar", "role-fit-progress", 4000);
 
   try {
-    const result = await new GroqAdapter(state.apiKey).analyzeRoleFit({ resumeText: text });
-    setSessionState({ resumeText: text });
+    const result = await runRoleFitAnalysis({
+      resumeText: rawText,
+      apiKey:     state.apiKey,
+    });
     stop();
     showResult("role-fit-result", "role-fit-result-content", parseMarkdown(result));
+    setRoleFitMode("roleFit");
   } catch (err) {
     stop();
     console.error("[app] handleAnalyzeRoleFit:", err.message);
@@ -324,22 +266,15 @@ async function handleAnalyzeRoleFit() {
   setBtn("role-fit-btn", false, "🎯 Find My Best Roles");
 }
 
-/**
- * JD Matcher
- */
 async function handleMatchJD() {
-  const jd     = clampTextLength(sanitizeUserText($v("jd-text")), CONFIG.MAX_JD_LENGTH);
-  const resume = clampTextLength(sanitizeUserText(state.jdResumeText || $v("jd-resume-text")), CONFIG.MAX_RESUME_LENGTH);
-
-  if (!jd)                                   { showError("jd-error", "Job Description paste karo!"); return; }
-  if (resume.length < CONFIG.MIN_RESUME_LENGTH) { showError("jd-error", "Resume upload karo ya paste karo!"); return; }
+  const jdText     = $v("jd-text");
+  const resumeText = state.jdResumeText || $v("jd-resume-text");
 
   setBtn("jd-btn", true, "Matching...");
   const stop = startProgress("jd-bar", "jd-progress", 3000);
 
   try {
-    const result = await new GroqAdapter(state.apiKey).matchJD({ jdText: jd, resumeText: resume });
-    setSessionState({ jdText: jd, resumeText: resume });
+    const result = await runJdMatch({ jdText, resumeText, apiKey: state.apiKey });
     stop();
     showResult("jd-result", "jd-result-content", parseMarkdown(result));
   } catch (err) {
@@ -351,35 +286,22 @@ async function handleMatchJD() {
   setBtn("jd-btn", false, "🎯 Match Karo & Analyze");
 }
 
-/**
- * Generate interview question
- * @param {boolean} forceNew
- */
 async function handleGenerateQuestion(forceNew = false) {
-  const role = sanitizeUserText($v("int-role"));
-  const type = sanitizeUserText($v("int-type"));
+  const role = $v("int-role");
+  const type = $v("int-type");
 
   $("chat-container").innerHTML = "";
   $("user-answer").value = "";
-  $("answer-section").style.display = "none";
+  $("answer-section").classList.add("hidden");
   $("question-box").classList.remove("question-box--visible");
   setBtn("gen-btn", true, "Thinking...");
 
   try {
-    const raw = await new GroqAdapter(state.apiKey).generateInterviewQuestion({
-      role, type, forceNew, count: ++state.questionCount,
+    const { question, difficulty, focus } = await runGenerateQuestion({
+      role, type, forceNew, count: ++state.questionCount, apiKey: state.apiKey,
     });
-
-    let question = "", difficulty = "Medium", focus = "";
-    raw.split("\n").forEach((line) => {
-      if (line.startsWith("QUESTION:"))   question   = line.replace("QUESTION:", "").trim();
-      if (line.startsWith("DIFFICULTY:")) difficulty = line.replace("DIFFICULTY:", "").trim();
-      if (line.startsWith("FOCUS:"))      focus      = line.replace("FOCUS:", "").trim();
-    });
-    if (!question) question = raw.trim();
 
     state.currentQuestion = question;
-    updateLastInterview({ role, type, question });
     $("question-text").textContent = question;
     $("question-tags").innerHTML = `
       <span class="tag tag--blue">${escapeHtml(type.split("—")[0].trim())}</span>
@@ -387,7 +309,7 @@ async function handleGenerateQuestion(forceNew = false) {
       ${focus ? `<span class="tag tag--purple">${escapeHtml(focus)}</span>` : ""}
     `;
     $("question-box").classList.add("question-box--visible");
-    $("answer-section").style.display = "block";
+    $("answer-section").classList.remove("hidden");
     $("answer-section").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
     console.error("[app] handleGenerateQuestion:", err.message);
@@ -397,15 +319,10 @@ async function handleGenerateQuestion(forceNew = false) {
   setBtn("gen-btn", false, "❓ Generate Question");
 }
 
-/**
- * Evaluate interview answer
- */
 async function handleGetFeedback() {
-  const answer = clampTextLength(sanitizeUserText($v("user-answer")), CONFIG.MAX_ANSWER_LENGTH);
-  if (!answer) { showError("int-error", "Pehle apna jawab likho!"); return; }
-
-  const role = sanitizeUserText($v("int-role"));
-  const type = sanitizeUserText($v("int-type"));
+  const answer = $v("user-answer");
+  const role   = $v("int-role");
+  const type   = $v("int-type");
 
   setBtn("feedback-btn", true, "Evaluating...");
   const stop = startProgress("int-bar", "int-progress", 2500);
@@ -413,17 +330,13 @@ async function handleGetFeedback() {
   addChatMsg("chat-container", "user", escapeHtml(answer));
 
   try {
-    const result = await new GroqAdapter(state.apiKey).evaluateAnswer({
+    const { rawMarkdown } = await runEvaluateAnswer({
       question: state.currentQuestion, answer, role, type,
+      apiKey: state.apiKey,
+      parseMarkdown,
     });
     stop();
-    addChatMsg("chat-container", "ai", parseMarkdown(result));
-    updateLastInterview({ role, type, question: state.currentQuestion });
-    saveSession({
-      date: new Date().toISOString(), role, type,
-      question: state.currentQuestion, answer,
-      feedback: parseMarkdown(result), score: "N/A",
-    });
+    addChatMsg("chat-container", "ai", parseMarkdown(rawMarkdown));
     renderHistoryList($("history-list"));
   } catch (err) {
     stop();
@@ -434,9 +347,6 @@ async function handleGetFeedback() {
   setBtn("feedback-btn", false, "💬 Get AI Feedback");
 }
 
-/**
- * Get expected answer tips
- */
 async function handleGetTips() {
   const role = $v("int-role");
   const type = $v("int-type");
@@ -446,11 +356,11 @@ async function handleGetTips() {
   $("chat-container").innerHTML = "";
 
   try {
-    const result = await new GroqAdapter(state.apiKey).getAnswerTips({
-      question: state.currentQuestion, role, type,
+    const { rawMarkdown } = await runGetAnswerTips({
+      question: state.currentQuestion, role, type, apiKey: state.apiKey,
     });
     stop();
-    addChatMsg("chat-container", "ai", parseMarkdown(result));
+    addChatMsg("chat-container", "ai", parseMarkdown(rawMarkdown));
   } catch (err) {
     stop();
     console.error("[app] handleGetTips:", err.message);
@@ -460,23 +370,16 @@ async function handleGetTips() {
   setBtn("tips-btn", false, "📋 Expected Answer");
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-
-/**
- * Bootstrap application after DOMContentLoaded
- */
+// Init
 function init() {
-  // API Key
   state.apiKey = getApiKey();
   updateConnectionStatus(!!state.apiKey);
   if (!state.apiKey) apiModal.show();
 
-  // Panel navigation
   document.querySelectorAll("[data-panel]").forEach((el) =>
     el.addEventListener("click", () => showPanel(el.dataset.panel))
   );
 
-  // API Key modal
   $("save-api-btn")?.addEventListener("click", saveApiKey);
   $("skip-api-btn")?.addEventListener("click", () => apiModal.hide());
   $("api-key-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") saveApiKey(); });
@@ -484,7 +387,6 @@ function init() {
     el.addEventListener("click", () => apiModal.show())
   );
 
-  // Feature buttons
   $("resume-btn")?.addEventListener("click", handleAnalyzeResume);
   $("role-fit-btn")?.addEventListener("click", handleAnalyzeRoleFit);
   $("jd-btn")?.addEventListener("click", handleMatchJD);
@@ -493,24 +395,18 @@ function init() {
   $("feedback-btn")?.addEventListener("click", handleGetFeedback);
   $("tips-btn")?.addEventListener("click", handleGetTips);
 
-  // Drop zones
+  $("view-resume-result-btn")?.addEventListener("click", () => setRoleFitMode("resume"));
+  $("view-role-fit-result-btn")?.addEventListener("click", () => setRoleFitMode("roleFit"));
+
   initDropZone({ zoneId: "resume-drop-zone", inputId: "resume-file-input", fileNameId: "resume-file-name", onExtract: (text) => { state.resumeText = text; } });
   initDropZone({ zoneId: "jd-drop-zone",     inputId: "jd-file-input",     fileNameId: "jd-file-name",     onExtract: (text) => { state.jdResumeText = text; } });
 
-  // History + Score Tracker
-  $("clear-history-btn")?.addEventListener("click", () => {
-    clearHistory();
-    renderHistoryList($("history-list"));
-  });
-  $("clear-scores-btn")?.addEventListener("click", () => {
-    clearScores();
-    renderScoreTracker($("score-tracker-list"));
-  });
+  $("clear-history-btn")?.addEventListener("click", () => { clearHistory(); renderHistoryList($("history-list")); });
+  $("clear-scores-btn")?.addEventListener("click",  () => { clearScores();  renderScoreTracker($("score-tracker-list")); });
 
   renderHistoryList($("history-list"));
   renderScoreTracker($("score-tracker-list"));
 
-  // Sidebar
   const hamburger      = $("hamburger-btn");
   const sidebar        = document.querySelector(".sidebar");
   const sidebarOverlay = $("sidebar-overlay");
@@ -527,13 +423,11 @@ function init() {
     });
   });
 
-  // Theme — reads from storage.js, not direct localStorage
   applyTheme(getTheme() === "dark");
   $("theme-toggle")?.addEventListener("click", () => {
     applyTheme(document.documentElement.getAttribute("data-theme") !== "dark");
   });
 
-  // Offline detection + Feedback widget
   initOfflineDetection();
   initFeedbackWidget();
 }

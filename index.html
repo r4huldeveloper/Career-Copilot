@@ -337,7 +337,7 @@
                 <div class="role-fit-card__icon">🎯</div>
                 <div class="flex-1">
                   <div class="role-fit-card__title">AI Role Fit Analyzer</div>
-                  <p class="role-fit-card__desc">Tera resume kis role ke liye actually best fit hai? Top 3 roles with match %, 90-day roadmap, aur honest gap analysis.</p>
+                  <p class="role-fit-card__desc">Pure AI se resume par analysis — batayega kaunse role best fit hain, gap map aur quick action plan. Resume analyze karte hi AI automatically role-fit result nikalta hai.</p>
                   <button type="button" class="btn btn--primary" id="role-fit-btn">🎯 Find My Best Roles</button>
                   <div class="loading-bar mt-3" id="role-fit-progress">
                     <div class="loading-bar__fill" id="role-fit-bar"></div>
@@ -346,6 +346,11 @@
               </div>
             </div>
           </div>
+          <div class="role-fit-tabs hidden mt-4" id="role-fit-tabs">
+            <button type="button" class="btn btn--secondary btn--sm" id="view-resume-result-btn">📄 Resume Result</button>
+            <button type="button" class="btn btn--secondary btn--sm" id="view-role-fit-result-btn">🎯 Role Fit Result</button>
+          </div>
+
           <div class="result-box mt-4" id="role-fit-result">
             <div class="result-box__header">
               <span class="result-box__title">🎯 Role Fit Analysis</span>
@@ -526,7 +531,7 @@
                   💬 Get AI Feedback
                 </button>
                 <button type="button" class="btn btn--secondary" id="tips-btn">
-                  📋 Expected Answer
+                  📋 Hints / Expected Answer
                 </button>
               </div>
               <div class="loading-bar mt-3" id="int-progress">
