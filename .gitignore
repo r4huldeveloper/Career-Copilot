@@ -16,4 +16,4 @@ Thumbs.db
 .env.local
 
 # memories
-.memories/
+.docs/
