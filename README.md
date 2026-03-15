@@ -44,7 +44,7 @@
 
 ## 🏗️ Architecture Overview
 
-Career Copilot follows a strict **4-layer architecture** governed by [`AI_RULES.md`](.docs/AI_RULES.md). Every layer has exactly one responsibility — nothing bleeds into another.
+Career Copilot follows a strict **4-layer architecture**. Every layer has exactly one responsibility — nothing bleeds into another.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
