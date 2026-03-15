@@ -1,13 +1,12 @@
 # 🗺️ Career Copilot — Roadmap
-> This is a living document. Updated as we ship and learn from users.
+> Living document. Updated as we ship and learn from users.
 
 ---
 
-## ✅ What We've Built (v0.1.0)
-The first version — built in 1 day, shipped because someone else needed it too.
+## ✅ Shipped — v0.1.0
 
 | Feature | Status |
-|---------|--------|
+|---|---|
 | Resume Analyzer — ATS score, rewritten bullets | ✅ Shipped |
 | JD Matcher — exact gaps & corrections | ✅ Shipped |
 | Mock Interview — questions, AI feedback, expected answers | ✅ Shipped |
@@ -21,63 +20,76 @@ The first version — built in 1 day, shipped because someone else needed it too
 
 ---
 
-## ✅ Completed (v0.2.0-final)
+## ✅ Shipped — v0.2.0
 
 | Feature | Status |
-|---------|--------|
+|---|---|
 | Dark mode toggle | ✅ Shipped |
 | Mobile responsive layout | ✅ Shipped |
-| Feedback Button | ✅ Shipped |
 | `src/config.js` — centralized constants | ✅ Shipped |
-| Replace `alert()` with modal UI messages | ✅ Shipped |
-| Move `initFeedbackWidget()` inside `init()` | ✅ Shipped |
-| Input sanitization and length-limits (`sanitize.js`) | ✅ Shipped |
-| `callGroq` circuit breaker (retry/backoff) | ✅ Shipped |
+| Replace `alert()` with inline UI error messages | ✅ Shipped |
+| Input sanitization + length limits (`sanitize.js`) | ✅ Shipped |
+| Circuit breaker in `groq.js` (retry / backoff) | ✅ Shipped |
 | `GroqAdapter` provider interface (`src/adapters/aiProvider.js`) | ✅ Shipped |
 | Prompt templates moved to `src/prompts/groqPrompts.js` | ✅ Shipped |
-| Session-memory layer (`src/core/logic/sessionState.js`) | ✅ Shipped |
+| Session memory layer (`src/core/logic/sessionState.js`) | ✅ Shipped |
 | `parseMarkdown` + XSS-safe HTML output | ✅ Shipped |
-| `src/tests.js` expanded (sanitize + circuit breaker) | ✅ Shipped |
+| `src/tests.js` — sanitize + circuit breaker unit tests | ✅ Shipped |
 | AI Role Fit Analyzer | ✅ Shipped |
-| Resume score tracker over time | ✅ Shipped |
+| ATS Score Tracker over time | ✅ Shipped |
 
 ---
 
-## 📋 Planned (v0.3.0)
+## ✅ Shipped — v0.3.0 (current)
+
+| Feature | Status |
+|---|---|
+| Pure Logic Layer — `src/core/logic/resumeLogic.js` | ✅ Shipped |
+| Pure Logic Layer — `src/core/logic/jdLogic.js` | ✅ Shipped |
+| Pure Logic Layer — `src/core/logic/interviewLogic.js` | ✅ Shipped |
+| `app.js` reduced to UI Shell — zero business logic | ✅ Shipped |
+| Structured prompt output contracts — all 6 prompts | ✅ Shipped |
+| `parseAtsScore` — 3-pattern fallback regex | ✅ Shipped |
+| Role Fit section show/hide bug fixed | ✅ Shipped |
+| Mock Interview feedback + tips display bug fixed | ✅ Shipped |
+| `AI_RULES.md` — Output Contract + Test Mandate rules added | ✅ Shipped |
+| `architecture.md` — full data flow + layer map updated | ✅ Shipped |
+
+---
+
+## 📋 Planned — v0.4.0
 
 | Feature | Why |
-|---------|-----|
-| Gemini API support | Users who prefer Google's free tier |
-| Resume templates download | Role-specific templates — PM, SDE, BA |
+|---|---|
+| Gemini API support | Users who prefer Google's free tier — 1-file change in `aiProvider.js` |
+| OpenAI / Mistral support | More model choices, same adapter interface |
+| Resume templates download | Role-specific templates — PM, SDE, BA ready to fill |
 | LinkedIn optimization tool | After resume, fix LinkedIn profile too |
-| Share interview score on LinkedIn | Viral loop — each share = new users |
 
 ---
 
-## 🔭 Future Vision (v1.0.0)
+## 🔭 Future Vision — v1.0.0
 
 | Feature | Why |
-|---------|-----|
-| User accounts + saved resumes | Track progress over multiple sessions |
-| Resume version history | See how resume improved over time |
+|---|---|
+| User accounts + saved resumes | Track progress across sessions |
+| Resume version history | See improvement over time |
 | Company-specific interview prep | Prep for Flipkart, Swiggy, Razorpay etc. |
+| Share interview score on LinkedIn | Viral loop — each share = new users |
 | Referral system | Share → unlock premium features |
-| API support — OpenAI, Claude, Mistral | More model choices |
 
 ---
 
 ## 💡 How to Contribute
-See something in the roadmap you want to build?
 
 1. Check [open issues](https://github.com/r4huldeveloper/Career-Copilot/issues) — find one labeled `good first issue`
-2. Comment on the issue — "I'd like to work on this"
-3. Fork → build → PR
-
-Every contribution matters — from fixing a typo to shipping a full feature.
+2. Comment — "I'd like to work on this"
+3. Fork → build → PR (follow [`AI_RULES.md`](.docs/AI_RULES.md) before submitting)
 
 ---
 
-## 📊 Current Stats
+## 📊 Stats
+
 - 🌟 Live at [career-copilot-seven.vercel.app](https://career-copilot-seven.vercel.app)
 - 👥 Built for Indian freshers — PM, BA, SDE, Data Science, SEO, Design
 - 🔒 100% private — data never leaves your browser
@@ -86,5 +98,5 @@ Every contribution matters — from fixing a typo to shipping a full feature.
 ---
 
 *Last updated: March 15, 2026*
-*Version: v0.2.0 (final)*
+*Version: v0.3.0*
 *Built by [@r4huldeveloper](https://github.com/r4huldeveloper)*
