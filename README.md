@@ -25,6 +25,21 @@
 - **🔒 100% Private** — Data never leaves your browser. No server, no tracking.
 - **🆓 Forever Free** — Uses your own free Groq API key (2 min setup)
 
+## 💡 Why this repo works (developer-first)
+
+- 100% vanilla JavaScript + zero build step makes local contributions instant.
+- Clear separation: UI, components, API adapter, prompt templates, sanitization, session state.
+- Lightweight, low-risk, easily forkable, and easy to integrate in larger systems.
+- Open by default: no hidden backend black box. Useful for learning and production prototypes.
+- Includes a built-in Minimal full app flow + edge-focused test suite (`src/tests.js`).
+
+## 🧹 Maintenance and Quality
+
+- `src/api/groq.js` has circuit breaker and useful error mapping (service down, rate limit, invalid key).
+- `src/utils/sanitize.js` + markdown escape ensure robust XSS protection.
+- `src/adapters/aiProvider.js` provides provider-switch abstraction (v0.2.0-final architecture) for future OpenAI/Gemini.
+- `README`, `.docs/architecture.md`, and `ROADMAP.md` are synced with current implementation.
+
 ---
 
 ## 🚀 Run Locally
@@ -65,8 +80,17 @@ Career-Copilot/
 │   ├── components/
 │   │   ├── feedback.js  # feedback button
 │   │   ├── fileUpload.js # Drag & drop upload
+│   │   ├── historyList.js # history view
 │   │   ├── modal.js      # Modal controller
-│   │   └── progressBar.js # Progress animations
+│   │   ├── progressBar.js # Progress animations
+│   │   └── scoreTracker.js # ATS score chart
+│   ├── adapters/
+│   │   └── aiProvider.js # provider abstraction
+│   ├── core/
+│   │   └── logic/
+│   │       └── sessionState.js # in-memory session state
+│   ├── prompts/
+│   │   └── groqPrompts.js # AI prompt templates
 │   ├── styles/
 │   │   ├── variables.css # Design tokens
 │   │   ├── base.css      # Reset + globals

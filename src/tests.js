@@ -52,6 +52,8 @@ function assertEqual(name, actual, expected) {
 // ── markdown.js tests ─────────────────────────────────────────────────────────
 
 import { parseMarkdown } from "./utils/markdown.js";
+import { sanitizeUserText, clampTextLength } from "./utils/sanitize.js";
+import { callGroq } from "./api/groq.js";
 
 function testMarkdown() {
   console.group("📝 markdown.js");
@@ -180,6 +182,64 @@ function testAtsScoreParser() {
   console.groupEnd();
 }
 
+// ── sanitize.js tests ─────────────────────────────────────────────────────────
+
+function testSanitizeUserText() {
+  console.group("🧹 sanitize.js");
+
+  assertEqual("Remove control chars", sanitizeUserText("abc\x00\x1Fdef"), "abcdef");
+  assertEqual("Trim spaces", sanitizeUserText("  hello  "), "hello");
+  assertEqual("Non-string returns empty", sanitizeUserText(123), "");
+  assertEqual("No change when clean", sanitizeUserText("fine text"), "fine text");
+
+  assertEqual("clampTextLength caps length", clampTextLength("123456", 4), "1234");
+  assertEqual("clampTextLength no change if short", clampTextLength("abc", 10), "abc");
+
+  console.groupEnd();
+}
+
+// ── callGroq circuit breaker tests ─────────────────────────────────────────────
+
+async function testCallGroqCircuitBreaker() {
+  console.group("🛡️ callGroq circuit breaker");
+
+  const originalFetch = window.fetch;
+  let attempts = 0;
+
+  window.fetch = async () => {
+    attempts += 1;
+    return {
+      ok: false,
+      status: 503,
+      json: async () => ({ error: { message: "Service unavailable" } }),
+    };
+  };
+
+  let firstError = false;
+  try {
+    await callGroq("x", "y", "gsk_test");
+  } catch (err) {
+    firstError = err.message.includes("Rate limit" ) === false;
+  }
+  assert("First failure throws", firstError);
+
+  // Hit failure threshold
+  for (let i = 0; i < 3; i++) {
+    try { await callGroq("x", "y", "gsk_test"); } catch (e) { /* noop */ }
+  }
+
+  let breakerTriggered = false;
+  try {
+    await callGroq("x", "y", "gsk_test");
+  } catch (err) {
+    breakerTriggered = err.message.includes("temporarily unavailable");
+  }
+  assert("Circuit breaker opens after repeated failures", breakerTriggered);
+
+  window.fetch = originalFetch;
+  console.groupEnd();
+}
+
 // ── escapeHtml tests ──────────────────────────────────────────────────────────
 // Tests for XSS prevention (inline — replicate logic)
 
@@ -298,7 +358,7 @@ function testHistoryList() {
  * Run all tests and print summary
  * @returns {{ passed: number, failed: number }}
  */
-export function runTests() {
+export async function runTests() {
   _passed = 0;
   _failed = 0;
 
@@ -308,6 +368,8 @@ export function runTests() {
   testMarkdown();
   testStorage();
   testAtsScoreParser();
+  testSanitizeUserText();
+  await testCallGroqCircuitBreaker();
   testEscapeHtml();
   testScoreTracker();
   testHistoryList();

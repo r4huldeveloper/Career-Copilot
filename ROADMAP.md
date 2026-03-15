@@ -21,7 +21,7 @@ The first version — built in 1 day, shipped because someone else needed it too
 
 ---
 
-## ✅ Completed (v0.2.0)
+## ✅ Completed (v0.2.0-final)
 
 | Feature | Status |
 |---------|--------|
@@ -31,9 +31,13 @@ The first version — built in 1 day, shipped because someone else needed it too
 | `src/config.js` — centralized constants | ✅ Shipped |
 | Replace `alert()` with modal UI messages | ✅ Shipped |
 | Move `initFeedbackWidget()` inside `init()` | ✅ Shipped |
-| Input sanitization — `feedback.js` + `app.js` | ✅ Shipped |
-| `console.error` in all catch blocks | ✅ Shipped |
-| Fix double `style` attribute on history-details | ✅ Shipped |
+| Input sanitization and length-limits (`sanitize.js`) | ✅ Shipped |
+| `callGroq` circuit breaker (retry/backoff) | ✅ Shipped |
+| `GroqAdapter` provider interface (`src/adapters/aiProvider.js`) | ✅ Shipped |
+| Prompt templates moved to `src/prompts/groqPrompts.js` | ✅ Shipped |
+| Session-memory layer (`src/core/logic/sessionState.js`) | ✅ Shipped |
+| `parseMarkdown` + XSS-safe HTML output | ✅ Shipped |
+| `src/tests.js` expanded (sanitize + circuit breaker) | ✅ Shipped |
 | AI Role Fit Analyzer | ✅ Shipped |
 | Resume score tracker over time | ✅ Shipped |
 
@@ -81,5 +85,6 @@ Every contribution matters — from fixing a typo to shipping a full feature.
 
 ---
 
-*Last updated: March 2026*
+*Last updated: March 15, 2026*
+*Version: v0.2.0 (final)*
 *Built by [@r4huldeveloper](https://github.com/r4huldeveloper)*

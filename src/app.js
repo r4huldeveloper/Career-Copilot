@@ -13,14 +13,15 @@ import {
   getTheme, setTheme,
 }                                       from "./utils/storage.js";
 import { parseMarkdown }               from "./utils/markdown.js";
+import { sanitizeUserText, clampTextLength } from "./utils/sanitize.js";
 import { startProgress, setProgressStep } from "./components/progressBar.js";
 import { initDropZone }                from "./components/fileUpload.js";
 import { createModal }                 from "./components/modal.js";
+import { GroqAdapter }              from "./adapters/aiProvider.js";
 import {
-  analyzeResume, analyzeRoleFit,
-  matchJD, generateInterviewQuestion,
-  evaluateAnswer, getAnswerTips,
-}                                       from "./api/groq.js";
+  getSessionState, setSessionState,
+  resetSessionState, updateLastInterview,
+}                                       from "./core/logic/sessionState.js";
 import { CONFIG }                      from "./config.js";
 
 // ── App State ─────────────────────────────────────────────────────────────────
@@ -255,8 +256,9 @@ function closeSidebar(sidebar, overlay) {
  * Resume Analyzer — auto-saves ATS score, reveals Role Fit section
  */
 async function handleAnalyzeResume() {
-  const text = state.resumeText || $v("resume-text");
-  const role = $v("resume-role");
+  const rawText = state.resumeText || $v("resume-text");
+  const text = clampTextLength(sanitizeUserText(rawText), CONFIG.MAX_RESUME_LENGTH);
+  const role = sanitizeUserText($v("resume-role"));
 
   if (!text || text.length < CONFIG.MIN_RESUME_LENGTH) {
     showError("resume-error", "Resume upload karo ya paste karo pehle!");
@@ -268,7 +270,8 @@ async function handleAnalyzeResume() {
   const stop = startProgress("resume-bar", "resume-progress", 3000);
 
   try {
-    const result = await analyzeResume({ resumeText: text, targetRole: role, apiKey: state.apiKey });
+    const result = await new GroqAdapter(state.apiKey).analyzeResume({ resumeText: text, targetRole: role });
+    setSessionState({ resumeText: text, lastRole: role });
     stop();
     setProgressStep(["rs-1", "rs-2", "rs-3", "rs-4"], 4);
     showResult("resume-result", "resume-result-content", parseMarkdown(result));
@@ -296,7 +299,8 @@ async function handleAnalyzeResume() {
  * AI Role Fit Analyzer — reuses already-uploaded resume text
  */
 async function handleAnalyzeRoleFit() {
-  const text = state.resumeText || $v("resume-text");
+  const rawText = state.resumeText || $v("resume-text");
+  const text = clampTextLength(sanitizeUserText(rawText), CONFIG.MAX_RESUME_LENGTH);
 
   if (!text || text.length < CONFIG.MIN_RESUME_LENGTH) {
     showError("resume-error", "Pehle resume analyze karo upar se!");
@@ -307,7 +311,8 @@ async function handleAnalyzeRoleFit() {
   const stop = startProgress("role-fit-bar", "role-fit-progress", 4000);
 
   try {
-    const result = await analyzeRoleFit({ resumeText: text, apiKey: state.apiKey });
+    const result = await new GroqAdapter(state.apiKey).analyzeRoleFit({ resumeText: text });
+    setSessionState({ resumeText: text });
     stop();
     showResult("role-fit-result", "role-fit-result-content", parseMarkdown(result));
   } catch (err) {
@@ -323,8 +328,8 @@ async function handleAnalyzeRoleFit() {
  * JD Matcher
  */
 async function handleMatchJD() {
-  const jd     = $v("jd-text");
-  const resume = state.jdResumeText || $v("jd-resume-text");
+  const jd     = clampTextLength(sanitizeUserText($v("jd-text")), CONFIG.MAX_JD_LENGTH);
+  const resume = clampTextLength(sanitizeUserText(state.jdResumeText || $v("jd-resume-text")), CONFIG.MAX_RESUME_LENGTH);
 
   if (!jd)                                   { showError("jd-error", "Job Description paste karo!"); return; }
   if (resume.length < CONFIG.MIN_RESUME_LENGTH) { showError("jd-error", "Resume upload karo ya paste karo!"); return; }
@@ -333,7 +338,8 @@ async function handleMatchJD() {
   const stop = startProgress("jd-bar", "jd-progress", 3000);
 
   try {
-    const result = await matchJD({ jdText: jd, resumeText: resume, apiKey: state.apiKey });
+    const result = await new GroqAdapter(state.apiKey).matchJD({ jdText: jd, resumeText: resume });
+    setSessionState({ jdText: jd, resumeText: resume });
     stop();
     showResult("jd-result", "jd-result-content", parseMarkdown(result));
   } catch (err) {
@@ -350,8 +356,8 @@ async function handleMatchJD() {
  * @param {boolean} forceNew
  */
 async function handleGenerateQuestion(forceNew = false) {
-  const role = $v("int-role");
-  const type = $v("int-type");
+  const role = sanitizeUserText($v("int-role"));
+  const type = sanitizeUserText($v("int-type"));
 
   $("chat-container").innerHTML = "";
   $("user-answer").value = "";
@@ -360,8 +366,8 @@ async function handleGenerateQuestion(forceNew = false) {
   setBtn("gen-btn", true, "Thinking...");
 
   try {
-    const raw = await generateInterviewQuestion({
-      role, type, forceNew, count: ++state.questionCount, apiKey: state.apiKey,
+    const raw = await new GroqAdapter(state.apiKey).generateInterviewQuestion({
+      role, type, forceNew, count: ++state.questionCount,
     });
 
     let question = "", difficulty = "Medium", focus = "";
@@ -373,6 +379,7 @@ async function handleGenerateQuestion(forceNew = false) {
     if (!question) question = raw.trim();
 
     state.currentQuestion = question;
+    updateLastInterview({ role, type, question });
     $("question-text").textContent = question;
     $("question-tags").innerHTML = `
       <span class="tag tag--blue">${escapeHtml(type.split("—")[0].trim())}</span>
@@ -394,11 +401,11 @@ async function handleGenerateQuestion(forceNew = false) {
  * Evaluate interview answer
  */
 async function handleGetFeedback() {
-  const answer = $v("user-answer");
+  const answer = clampTextLength(sanitizeUserText($v("user-answer")), CONFIG.MAX_ANSWER_LENGTH);
   if (!answer) { showError("int-error", "Pehle apna jawab likho!"); return; }
 
-  const role = $v("int-role");
-  const type = $v("int-type");
+  const role = sanitizeUserText($v("int-role"));
+  const type = sanitizeUserText($v("int-type"));
 
   setBtn("feedback-btn", true, "Evaluating...");
   const stop = startProgress("int-bar", "int-progress", 2500);
@@ -406,11 +413,12 @@ async function handleGetFeedback() {
   addChatMsg("chat-container", "user", escapeHtml(answer));
 
   try {
-    const result = await evaluateAnswer({
-      question: state.currentQuestion, answer, role, type, apiKey: state.apiKey,
+    const result = await new GroqAdapter(state.apiKey).evaluateAnswer({
+      question: state.currentQuestion, answer, role, type,
     });
     stop();
     addChatMsg("chat-container", "ai", parseMarkdown(result));
+    updateLastInterview({ role, type, question: state.currentQuestion });
     saveSession({
       date: new Date().toISOString(), role, type,
       question: state.currentQuestion, answer,
@@ -438,8 +446,8 @@ async function handleGetTips() {
   $("chat-container").innerHTML = "";
 
   try {
-    const result = await getAnswerTips({
-      question: state.currentQuestion, role, type, apiKey: state.apiKey,
+    const result = await new GroqAdapter(state.apiKey).getAnswerTips({
+      question: state.currentQuestion, role, type,
     });
     stop();
     addChatMsg("chat-container", "ai", parseMarkdown(result));
