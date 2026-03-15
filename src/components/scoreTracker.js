@@ -81,6 +81,7 @@ export function renderScoreTracker(container) {
   const latest  = scores[0].atsScore;
   const total   = scores.length;
 
+  // Static shell via innerHTML (no untrusted text injected here)
   container.innerHTML = `
     <div class="score-tracker__stats">
       <div class="card score-tracker__stat-card">
@@ -102,33 +103,62 @@ export function renderScoreTracker(container) {
         </div>
       </div>
     </div>
-
-    <div class="score-tracker__list">
-      ${scores.map((s, i) => `
-        <div class="score-tracker__item">
-          <div class="score-tracker__badge"
-               style="background:${_scoreBg(s.atsScore)};color:${_scoreColor(s.atsScore)}">
-            ${s.atsScore}
-          </div>
-          <div class="score-tracker__info">
-            <div class="score-tracker__role">${_escape(s.role)}</div>
-            <div class="score-tracker__date">
-              ${new Date(s.date).toLocaleDateString("en-IN", {
-                day: "numeric", month: "short", year: "numeric"
-              })}
-            </div>
-          </div>
-          <div class="score-tracker__right">
-            <span class="score-tracker__label tag"
-                  style="background:${_scoreBg(s.atsScore)};color:${_scoreColor(s.atsScore)};border-color:${_scoreColor(s.atsScore)}">
-              ${_scoreLabel(s.atsScore)}
-            </span>
-            ${i === 0
-              ? '<span class="score-tracker__latest-badge">LATEST</span>'
-              : ""}
-          </div>
-        </div>
-      `).join("")}
-    </div>
+    <div class="score-tracker__list"></div>
   `;
+
+  const listEl = container.querySelector(".score-tracker__list");
+  if (!listEl) return;
+
+  scores.forEach((s, i) => {
+    const itemEl = document.createElement("div");
+    itemEl.className = "score-tracker__item";
+
+    const badgeEl = document.createElement("div");
+    badgeEl.className = "score-tracker__badge";
+    badgeEl.style.background = _scoreBg(s.atsScore);
+    badgeEl.style.color = _scoreColor(s.atsScore);
+    badgeEl.textContent = String(s.atsScore);
+
+    const infoEl = document.createElement("div");
+    infoEl.className = "score-tracker__info";
+
+    const roleEl = document.createElement("div");
+    roleEl.className = "score-tracker__role";
+    // Use textContent so any HTML in role is treated as text
+    roleEl.textContent = s.role != null ? String(s.role) : "";
+
+    const dateEl = document.createElement("div");
+    dateEl.className = "score-tracker__date";
+    dateEl.textContent = new Date(s.date).toLocaleDateString("en-IN", {
+      day: "numeric", month: "short", year: "numeric",
+    });
+
+    infoEl.appendChild(roleEl);
+    infoEl.appendChild(dateEl);
+
+    const rightEl = document.createElement("div");
+    rightEl.className = "score-tracker__right";
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "score-tracker__label tag";
+    labelEl.style.background = _scoreBg(s.atsScore);
+    labelEl.style.color = _scoreColor(s.atsScore);
+    labelEl.style.borderColor = _scoreColor(s.atsScore);
+    labelEl.textContent = _scoreLabel(s.atsScore);
+
+    rightEl.appendChild(labelEl);
+
+    if (i === 0) {
+      const latestBadge = document.createElement("span");
+      latestBadge.className = "score-tracker__latest-badge";
+      latestBadge.textContent = "LATEST";
+      rightEl.appendChild(latestBadge);
+    }
+
+    itemEl.appendChild(badgeEl);
+    itemEl.appendChild(infoEl);
+    itemEl.appendChild(rightEl);
+
+    listEl.appendChild(itemEl);
+  });
 }
