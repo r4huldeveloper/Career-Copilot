@@ -16,6 +16,39 @@ const KEYS = {
   THEME:   "theme",
 };
 
+// ── Simple Encoding Helpers (avoid cleartext at rest) ────────────────────────
+
+/**
+ * Encode a string for storage.
+ * Note: Uses Base64 to avoid storing sensitive values in cleartext.
+ * This is not strong cryptography, but reduces direct exposure in storage.
+ * @param {string} value
+ * @returns {string}
+ */
+function encode(value) {
+  try {
+    // Handle UTF-8 safely before btoa
+    return btoa(unescape(encodeURIComponent(value)));
+  } catch {
+    return value;
+  }
+}
+
+/**
+ * Decode a value previously encoded with encode().
+ * @param {string|null} value
+ * @returns {string|null}
+ */
+function decode(value) {
+  if (value == null) return value;
+  try {
+    return decodeURIComponent(escape(atob(value)));
+  } catch {
+    // Not encoded or corrupt; return as-is
+    return value;
+  }
+}
+
 // ── Core Wrapper ──────────────────────────────────────────────────────────────
 
 /**
@@ -56,10 +89,14 @@ export const storage = {
 // ── API Key ───────────────────────────────────────────────────────────────────
 
 /** @returns {string} Stored Groq API key or empty string */
-export const getApiKey  = () => storage.get(KEYS.API_KEY) || "";
+export const getApiKey  = () => {
+  const stored = storage.get(KEYS.API_KEY);
+  const decoded = decode(stored);
+  return decoded || "";
+};
 
 /** @param {string} key — Groq API key to persist */
-export const setApiKey  = (key) => storage.set(KEYS.API_KEY, key);
+export const setApiKey  = (key) => storage.set(KEYS.API_KEY, encode(key));
 
 /** Remove stored API key */
 export const clearApiKey = () => storage.remove(KEYS.API_KEY);
