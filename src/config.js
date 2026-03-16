@@ -58,20 +58,20 @@ export const CONFIG = {
       id:          "gemini",
       name:        "Gemini",
       tagline:     "Google AI — free tier available",
-      logoUrl:     "https://cdn.brandfetch.io/idKLgURALi/w/400/h/400/theme/dark/icon.png?c=1dxbfHSJFAPEyhd-twjqVd",
       keyPrefix:   "AIza",
       keyLink:     "https://aistudio.google.com/app/apikey",
       keyLinkText: "aistudio.google.com",
       placeholder: "AIzaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-      endpoint:    "https://generativelanguage.googleapis.com/v1beta/models",
-      apiFormat:   "gemini",   // different request/response format
+      // Google's OpenAI-compatible endpoint — no CORS issues, same format as Groq/OpenAI
+      endpoint:    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      apiFormat:   "openai",
       models: [
-        { id: "gemini-1.5-flash",   name: "Gemini 1.5 Flash",   tier: "free",    context: "1M"  },
-        { id: "gemini-1.5-flash-8b",name: "Gemini Flash 8B",    tier: "free",    context: "1M"  },
-        { id: "gemini-1.5-pro",     name: "Gemini 1.5 Pro",     tier: "premium", context: "2M"  },
-        { id: "gemini-2.0-flash",   name: "Gemini 2.0 Flash",   tier: "free",    context: "1M"  },
+        { id: "gemini-2.0-flash",    name: "Gemini 2.0 Flash",   tier: "free",    context: "1M"  },
+        { id: "gemini-1.5-flash",    name: "Gemini 1.5 Flash",   tier: "free",    context: "1M"  },
+        { id: "gemini-1.5-flash-8b", name: "Gemini Flash 8B",    tier: "free",    context: "1M"  },
+        { id: "gemini-1.5-pro",      name: "Gemini 1.5 Pro",     tier: "premium", context: "2M"  },
       ],
-      defaultModel: "gemini-1.5-flash",
+      defaultModel: "gemini-2.0-flash",
     },
 
     mistral: {

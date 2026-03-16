@@ -140,57 +140,10 @@ async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt }
   }
 }
 
-// ── Gemini-format call ────────────────────────────────────────────────────────
-
-async function _callGemini({ endpoint, model, apiKey, systemPrompt, userPrompt }) {
-  const url      = `${endpoint}/${model}:generateContent?key=${apiKey}`;
-  const contents = [];
-
-  // Gemini doesn't have a system role — prepend it as first user turn
-  const fullPrompt = systemPrompt
-    ? `${systemPrompt}\n\n---\n\n${_sanitize(userPrompt)}`
-    : _sanitize(userPrompt);
-
-  contents.push({ role: "user", parts: [{ text: fullPrompt }] });
-
-  let res;
-  try {
-    res = await fetch(url, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          maxOutputTokens: CONFIG.AI_MAX_TOKENS,
-          temperature:     CONFIG.AI_TEMPERATURE,
-        },
-      }),
-    });
-  } catch (err) {
-    _breakerFailure();
-    throw new Error("Network error — internet connection check karo");
-  }
-
-  if (!res.ok) {
-    _breakerFailure();
-    let msg = `HTTP ${res.status}`;
-    try { const d = await res.json(); msg = d?.error?.message || msg; } catch {}
-    if (res.status === 400) throw new Error("Invalid API key — Google AI Studio se verify karo");
-    if (res.status === 429) throw new Error("Rate limit — thodi der baad try karo");
-    throw new Error(msg);
-  }
-
-  try {
-    const data = await res.json();
-    _breakerSuccess();
-    return data.candidates[0].content.parts[0].text;
-  } catch (err) {
-    _breakerFailure();
-    throw new Error("Gemini response parse nahi hua — dobara try karo");
-  }
-}
-
 // ── Universal Dispatcher ──────────────────────────────────────────────────────
+// All providers now use OpenAI-compatible format.
+// Gemini uses Google's /v1beta/openai/ endpoint — same request/response as OpenAI.
+// Adding a new provider: add to CONFIG.PROVIDERS in config.js. If apiFormat="openai" → works automatically.
 
 async function _call({ systemPrompt, userPrompt, apiKey }) {
   _breakerCheck();
@@ -210,7 +163,7 @@ async function _call({ systemPrompt, userPrompt, apiKey }) {
     userPrompt,
   };
 
-  if (provider.apiFormat === "gemini") return _callGemini(params);
+  if (provider.apiFormat === "gemini") return _callOpenAI(params); // gemini uses openai-compat endpoint
   return _callOpenAI(params);
 }
 
