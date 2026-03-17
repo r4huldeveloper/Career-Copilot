@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Made for India](https://img.shields.io/badge/Made%20for-India%20🇮🇳-orange)](https://github.com/r4huldeveloper/Career-Copilot)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen)](CONTRIBUTING.md)
-[![Version](https://img.shields.io/badge/version-0.3.1-purple)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-purple)](CHANGELOG.md)
 [![Zero Backend](https://img.shields.io/badge/backend-zero-success)](https://github.com/r4huldeveloper/Career-Copilot)
 
 </div>
