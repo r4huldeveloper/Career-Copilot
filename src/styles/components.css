@@ -1326,3 +1326,256 @@
   .provider-card__tagline { display: none; }
   .provider-card { min-height: 120px; }
 }
+
+/* ── Offline banner ──────────────────────────────────────── */
+.offline-banner {
+  position: fixed;
+  top: var(--topbar-height);
+  left: 0;
+  right: 0;
+  z-index: 500;
+  background: var(--color-yellow-light);
+  border-bottom: 1px solid var(--color-yellow-border);
+  color: #92400e;
+  text-align: center;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.offline-banner.hidden {
+  display: none;
+}
+
+/* ============================================================
+   MODEL GRID — Provider model selection with tags
+   ============================================================ */
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.model-chip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: left;
+  font-family: var(--font-sans);
+  box-shadow: var(--shadow-xs);
+}
+
+.model-chip:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.model-chip--active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1), var(--shadow-sm);
+}
+
+.model-chip__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.model-chip__name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.model-chip--active .model-chip__name {
+  color: var(--color-accent-dark);
+}
+
+.model-chip__tag {
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.model-chip__tag--green  { background: var(--color-green-light);  color: var(--color-green);  border: 1px solid var(--color-green-border); }
+.model-chip__tag--purple { background: var(--color-purple-light); color: var(--color-purple); border: 1px solid var(--color-purple-border); }
+.model-chip__tag--blue   { background: var(--color-accent-light); color: var(--color-accent); border: 1px solid #bfdbfe; }
+.model-chip__tag--amber  { background: var(--color-yellow-light); color: var(--color-yellow); border: 1px solid var(--color-yellow-border); }
+.model-chip__tag--gray   { background: var(--color-bg);           color: var(--color-text-muted); border: 1px solid var(--color-border); }
+
+.model-chip__bottom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.model-chip__ctx {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.model-chip__paid {
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  color: var(--color-yellow);
+  background: var(--color-yellow-light);
+  border: 1px solid var(--color-yellow-border);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .model-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .model-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark mode */
+[data-theme="dark"] .model-chip {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .model-chip--active {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent);
+}
+
+/* ── Model chips with tags — v0.3.2 ─────────────────────── */
+.model-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.model-chip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-4);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-family: var(--font-sans);
+  text-align: left;
+  min-width: 160px;
+  box-shadow: var(--shadow-xs);
+}
+
+.model-chip:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.model-chip--active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1), var(--shadow-sm);
+}
+
+.model-chip__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.model-chip__name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.model-chip--active .model-chip__name {
+  color: var(--color-accent);
+}
+
+.model-chip__ctx {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.model-chip--active .model-chip__ctx {
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.2);
+  color: var(--color-accent);
+}
+
+.model-chip__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.model-chip__tag {
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.3px;
+  background: var(--color-green-light);
+  color: var(--color-green);
+  border: 1px solid var(--color-green-border);
+}
+
+.model-chip__tag:nth-child(2) {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+  border-color: var(--color-purple-border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .model-grid {
+    gap: var(--space-2);
+  }
+  .model-chip {
+    min-width: calc(50% - var(--space-2));
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .model-chip {
+    min-width: 100%;
+  }
+}
+
+/* Dark mode */
+[data-theme="dark"] .model-chip {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+[data-theme="dark"] .model-chip--active {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent);
+}

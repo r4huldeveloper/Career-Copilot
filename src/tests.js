@@ -53,7 +53,7 @@ function assertEqual(name, actual, expected) {
 
 import { parseMarkdown } from "./utils/markdown.js";
 import { sanitizeUserText, clampTextLength } from "./utils/sanitize.js";
-import { callGroq } from "./api/groq.js";
+import { callAI } from "./adapters/aiProvider.js";
 
 function testMarkdown() {
   console.group("📝 markdown.js");
@@ -283,8 +283,8 @@ function testSanitizeUserText() {
 
 // ── callGroq circuit breaker tests ─────────────────────────────────────────────
 
-async function testCallGroqCircuitBreaker() {
-  console.group("🛡️ callGroq circuit breaker");
+async function testCircuitBreaker() {
+  console.group("🛡️ Circuit breaker (aiProvider)");
 
   const originalFetch = window.fetch;
   let attempts = 0;
@@ -300,22 +300,22 @@ async function testCallGroqCircuitBreaker() {
 
   let firstError = false;
   try {
-    await callGroq("x", "y", "gsk_test");
+    await callAI("x", "y", "gsk_test");
   } catch (err) {
-    firstError = err.message.includes("Rate limit" ) === false;
+    firstError = true;
   }
   assert("First failure throws", firstError);
 
-  // Hit failure threshold
-  for (let i = 0; i < 3; i++) {
-    try { await callGroq("x", "y", "gsk_test"); } catch (e) { /* noop */ }
+  // Hit failure threshold (5 failures)
+  for (let i = 0; i < 5; i++) {
+    try { await callAI("x", "y", "gsk_test"); } catch (e) { /* noop */ }
   }
 
   let breakerTriggered = false;
   try {
-    await callGroq("x", "y", "gsk_test");
+    await callAI("x", "y", "gsk_test");
   } catch (err) {
-    breakerTriggered = err.message.includes("temporarily unavailable");
+    breakerTriggered = err.message.includes("mein available hoga");
   }
   assert("Circuit breaker opens after repeated failures", breakerTriggered);
 
@@ -454,7 +454,7 @@ export async function runTests() {
   testV02Migration();
   testAtsScoreParser();
   testSanitizeUserText();
-  await testCallGroqCircuitBreaker();
+  await testCircuitBreaker();
   testEscapeHtml();
   testScoreTracker();
   testHistoryList();

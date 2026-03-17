@@ -24,6 +24,7 @@ import { renderHistoryList }                from "./components/historyList.js";
 import {
   getApiKey, setApiKey, clearApiKey,
   getProvider, setProvider,
+  getModel, setModel,
   clearHistory, clearScores,
   getTheme, setTheme,
 }                                           from "./utils/storage.js";
@@ -32,6 +33,7 @@ import { sanitizeUserText }                 from "./utils/sanitize.js";
 import { startProgress, setProgressStep }   from "./components/progressBar.js";
 import { initDropZone }                     from "./components/fileUpload.js";
 import { initProviderPage }                 from "./components/providerPage.js";
+import { resetBreaker }                     from "./adapters/aiProvider.js";
 import { CONFIG }                           from "./config.js";
 
 // Pure Logic Layer imports (AI_RULES Rule 1 — Abstract Intelligence Core)
@@ -139,18 +141,23 @@ function updateConnectionStatus(connected) {
 
 function initApiSettingsPage() {
   const providerGrid = $("provider-grid");
+  const modelGrid    = $("model-grid");
   const keyPanel     = $("key-panel");
 
-  if (!providerGrid || !keyPanel) return;
+  if (!providerGrid || !modelGrid || !keyPanel) return;
 
   initProviderPage({
     providerGrid,
+    modelGrid,
     keyPanel,
-    onSave(providerId, apiKey) {
+    onSave(providerId, modelId, apiKey) {
       setProvider(providerId);
+      setModel(modelId);
       setApiKey(apiKey);
       state.apiKey   = apiKey;
       state.provider = providerId;
+      state.model    = modelId;
+      resetBreaker(providerId);
       updateConnectionStatus(true);
     },
     onDisconnect() {
@@ -169,19 +176,15 @@ function setOfflineBanner(offline) {
     banner.id = "offline-banner";
     banner.setAttribute("role", "alert");
     banner.setAttribute("aria-live", "assertive");
-    banner.style.cssText = [
-      "display:none", "position:fixed", "top:var(--topbar-height)",
-      "left:0", "right:0", "z-index:500",
-      "background:var(--color-yellow-light)",
-      "border-bottom:1px solid var(--color-yellow-border)",
-      "color:#92400e", "text-align:center",
-      "padding:var(--space-2) var(--space-4)",
-      "font-size:var(--text-sm)", "font-weight:var(--weight-medium)",
-    ].join(";");
+    banner.className = "offline-banner";
     banner.textContent = "⚠️ Internet nahi hai — AI features kaam nahi karenge";
     document.body.prepend(banner);
   }
-  banner.style.display = offline ? "block" : "none";
+  if (offline) {
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
 }
 
 function initOfflineDetection() {

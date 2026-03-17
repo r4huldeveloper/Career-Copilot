@@ -1,19 +1,21 @@
 /**
- * providerPage.js — API & Provider Settings
+ * providerPage.js — API & Provider Settings Page
  *
  * AI_RULES Rule 1 — Pure UI: zero AI calls, zero business logic.
  * AI_RULES Rule 3 — Atomic: deletable, zero footprint.
  * AI_RULES Rule 2 — Zero inline styles, zero style.* calls.
  *
- * Layout: providers full-width top, key panel full-width below (2-col inside).
- * Logo: assets/logos/{providerId}.png — place files in assets/logos/
+ * v0.3.2 — Model selector with tags restored.
+ * Selected model saved via onSave(providerId, modelId, apiKey).
  */
 
-import { CONFIG }                           from "../config.js";
-import { getProvider, getApiKey }           from "../utils/storage.js";
+import { CONFIG }                              from "../config.js";
+import { getProvider, getModel, getApiKey }    from "../utils/storage.js";
 
 function _logoPath(id) {
-  return `assets/logos/${id}.png`;
+  const provider = CONFIG.PROVIDERS[id];
+  const fileName = provider?.logo || `${id}.png`;
+  return `assets/logos/${encodeURI(fileName)}`;
 }
 
 function _esc(str) {
@@ -54,14 +56,53 @@ function _renderProviderCards(container, selectedId, onSelect) {
   });
 }
 
-// ── Key Panel — horizontal 2-col inside ──────────────────────────────────────
+// ── Model Selector with Tags ──────────────────────────────────────────────────
+function _renderModelSelector(container, providerId, selectedModelId) {
+  const provider = CONFIG.PROVIDERS[providerId];
+  const activeId = selectedModelId || provider.defaultModel;
+  container.innerHTML = "";
+
+  provider.models.forEach((m) => {
+    const isActive = m.id === activeId;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `model-chip${isActive ? " model-chip--active" : ""}`;
+    btn.dataset.modelId = m.id;
+    btn.setAttribute("aria-pressed", String(isActive));
+
+    const tagsHtml = (m.tags || [])
+      .map(t => `<span class="model-chip__tag">${_esc(t)}</span>`)
+      .join("");
+
+    btn.innerHTML = `
+      <div class="model-chip__top">
+        <span class="model-chip__name">${_esc(m.name)}</span>
+        <span class="model-chip__ctx">${_esc(m.context)}</span>
+      </div>
+      ${tagsHtml ? `<div class="model-chip__tags">${tagsHtml}</div>` : ""}
+    `;
+    container.appendChild(btn);
+  });
+
+  // Model click — update active state
+  container.addEventListener("click", (e) => {
+    const chip = e.target.closest(".model-chip");
+    if (!chip) return;
+    container.querySelectorAll(".model-chip").forEach((c) => {
+      c.classList.remove("model-chip--active");
+      c.setAttribute("aria-pressed", "false");
+    });
+    chip.classList.add("model-chip--active");
+    chip.setAttribute("aria-pressed", "true");
+  });
+}
+
+// ── Key Panel ─────────────────────────────────────────────────────────────────
 function _renderKeyPanel(container, providerId) {
   const provider  = CONFIG.PROVIDERS[providerId];
   const connected = !!getApiKey();
-
   container.innerHTML = `
     <div class="key-panel">
-
       <div class="key-panel__left">
         <div class="key-panel__header">
           <p class="key-panel__label">API Key</p>
@@ -79,7 +120,6 @@ function _renderKeyPanel(container, providerId) {
           </ol>
         </div>
       </div>
-
       <div class="key-panel__right">
         <div class="field">
           <input
@@ -96,18 +136,14 @@ function _renderKeyPanel(container, providerId) {
           <button type="button" class="btn btn--primary" id="provider-save-btn">
             Save &amp; Connect
           </button>
-          ${connected
-            ? `<button type="button" class="btn btn--ghost" id="provider-disconnect-btn">Disconnect</button>`
-            : ""}
+          ${connected ? `<button type="button" class="btn btn--ghost" id="provider-disconnect-btn">Disconnect</button>` : ""}
         </div>
         <p class="key-panel__note">
           Tumhari key sirf is browser mein save hoti hai. Kahi nahi jaati.
         </p>
       </div>
-
     </div>
   `;
-
   const input = container.querySelector("#provider-key-input");
   if (connected && input) {
     input.addEventListener("focus", () => { input.value = ""; }, { once: true });
@@ -115,14 +151,17 @@ function _renderKeyPanel(container, providerId) {
 }
 
 // ── Public init ───────────────────────────────────────────────────────────────
-export function initProviderPage({ providerGrid, keyPanel, onSave, onDisconnect }) {
+export function initProviderPage({ providerGrid, modelGrid, keyPanel, onSave, onDisconnect }) {
   let selectedProvider = getProvider();
+  let selectedModel    = getModel() || CONFIG.PROVIDERS[selectedProvider]?.defaultModel || "";
 
   function _render() {
     _renderProviderCards(providerGrid, selectedProvider, (id) => {
       selectedProvider = id;
+      selectedModel    = CONFIG.PROVIDERS[id]?.defaultModel || "";
       _render();
     });
+    _renderModelSelector(modelGrid, selectedProvider, selectedModel);
     _renderKeyPanel(keyPanel, selectedProvider);
     _wire();
   }
@@ -136,6 +175,7 @@ export function initProviderPage({ providerGrid, keyPanel, onSave, onDisconnect 
     saveBtn?.addEventListener("click", () => {
       const key      = keyInput?.value?.trim() || "";
       const provider = CONFIG.PROVIDERS[selectedProvider];
+
       if (provider.keyPrefix && !key.startsWith(provider.keyPrefix)) {
         errorEl.textContent = `Key "${provider.keyPrefix}" se shuru honi chahiye`;
         errorEl.classList.remove("hidden");
@@ -148,7 +188,12 @@ export function initProviderPage({ providerGrid, keyPanel, onSave, onDisconnect 
         setTimeout(() => errorEl.classList.add("hidden"), 4000);
         return;
       }
-      onSave(selectedProvider, key);
+
+      // Read selected model from DOM
+      const activeChip = modelGrid.querySelector(".model-chip--active");
+      selectedModel = activeChip?.dataset.modelId || CONFIG.PROVIDERS[selectedProvider]?.defaultModel || "";
+
+      onSave(selectedProvider, selectedModel, key);
       _render();
     });
 

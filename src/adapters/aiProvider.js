@@ -51,37 +51,60 @@ function _cacheSet(key, value) {
   catch (err) { console.error("[adapter] cache set failed:", err.message); }
 }
 
-// ── Circuit Breaker ───────────────────────────────────────────────────────────
+// ── Circuit Breaker — per provider ───────────────────────────────────────────
+// Per-provider breaker — Gemini failing doesn't block Groq.
+// Threshold raised: 5 failures (was 3) — one-off bugs don't trip it.
+// Block time reduced: 15s (was 30s) — user doesn't wait long.
 
-const CIRCUIT_BREAKER = {
-  failureCount: 0,
-  windowStart:  0,
-  openUntil:    0,
-  MAX_FAILURES: 3,
-  WINDOW_MS:    60_000,
-  OPEN_MS:      30_000,
-};
+const _breakers = {};
 
-function _breakerCheck() {
+function _getBreaker(providerId) {
+  if (!_breakers[providerId]) {
+    _breakers[providerId] = {
+      failureCount: 0,
+      windowStart:  0,
+      openUntil:    0,
+      MAX_FAILURES: 5,
+      WINDOW_MS:    60_000,
+      OPEN_MS:      15_000,
+    };
+  }
+  return _breakers[providerId];
+}
+
+function _breakerCheck(providerId) {
+  const b   = _getBreaker(providerId);
   const now = Date.now();
-  if (now < CIRCUIT_BREAKER.openUntil) {
-    throw new Error("AI service temporarily unavailable — thoda baad try karein");
+  if (now < b.openUntil) {
+    const secsLeft = Math.ceil((b.openUntil - now) / 1000);
+    throw new Error(`AI service ${secsLeft}s mein available hoga — thoda ruko`);
   }
-  if (now - CIRCUIT_BREAKER.windowStart > CIRCUIT_BREAKER.WINDOW_MS) {
-    CIRCUIT_BREAKER.failureCount = 0;
-    CIRCUIT_BREAKER.windowStart  = now;
+  if (now - b.windowStart > b.WINDOW_MS) {
+    b.failureCount = 0;
+    b.windowStart  = now;
   }
 }
 
-function _breakerSuccess() {
-  CIRCUIT_BREAKER.failureCount = 0;
-  CIRCUIT_BREAKER.openUntil    = 0;
+function _breakerSuccess(providerId) {
+  const b = _getBreaker(providerId);
+  b.failureCount = 0;
+  b.openUntil    = 0;
 }
 
-function _breakerFailure() {
-  CIRCUIT_BREAKER.failureCount += 1;
-  if (CIRCUIT_BREAKER.failureCount >= CIRCUIT_BREAKER.MAX_FAILURES) {
-    CIRCUIT_BREAKER.openUntil = Date.now() + CIRCUIT_BREAKER.OPEN_MS;
+function _breakerFailure(providerId) {
+  const b = _getBreaker(providerId);
+  b.failureCount += 1;
+  if (b.failureCount >= b.MAX_FAILURES) {
+    b.openUntil = Date.now() + b.OPEN_MS;
+    console.warn(`[aiProvider] Circuit breaker OPEN for ${providerId} — ${b.MAX_FAILURES} failures`);
+  }
+}
+
+/** Reset breaker for a provider — called after user changes provider or reconnects */
+export function resetBreaker(providerId) {
+  if (_breakers[providerId]) {
+    _breakers[providerId].failureCount = 0;
+    _breakers[providerId].openUntil    = 0;
   }
 }
 
@@ -95,10 +118,21 @@ function _sanitize(text) {
 
 // ── OpenAI-compatible call (Groq, OpenAI, Mistral) ────────────────────────────
 
-async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt }) {
+async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt, isGemini, providerId }) {
   const messages = [];
+
+  // Both Groq/OpenAI/Mistral AND Gemini support system role in OpenAI-compat mode
   if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
   messages.push({ role: "user", content: _sanitize(userPrompt) });
+
+  // Gemini OpenAI-compat: use max_tokens (same as others) — temperature supported too
+  // Only avoid unknown/unsupported fields
+  const body = {
+    model,
+    messages,
+    max_tokens:  CONFIG.AI_MAX_TOKENS,
+    temperature: CONFIG.AI_TEMPERATURE,
+  };
 
   let res;
   try {
@@ -108,34 +142,38 @@ async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt }
         "Content-Type":  "application/json",
         "Authorization": `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens:  CONFIG.AI_MAX_TOKENS,
-        temperature: CONFIG.AI_TEMPERATURE,
-      }),
+      body: JSON.stringify(body),
     });
   } catch (err) {
-    _breakerFailure();
-    throw new Error("Network error — internet connection check karo");
+    _breakerFailure(providerId);
+    console.error("[aiProvider] fetch failed:", err.message, "endpoint:", endpoint);
+    throw new Error(`Connection failed — ${err.message}`);
   }
 
   if (!res.ok) {
-    _breakerFailure();
+    _breakerFailure(providerId);
     let msg = `HTTP ${res.status}`;
-    try { const d = await res.json(); msg = d?.error?.message || msg; } catch {}
-    if (res.status === 401) throw new Error("Invalid API key — provider dashboard se verify karo");
+    try {
+      const d = await res.json();
+      msg = d?.error?.message || d?.message || msg;
+      console.error("[aiProvider] API error:", res.status, msg, "provider:", endpoint);
+    } catch { /* json parse failed */ }
+    if (res.status === 401 || res.status === 403) throw new Error("Invalid API key — provider dashboard se verify karo");
     if (res.status === 429) throw new Error("Rate limit — thodi der baad try karo");
     if (res.status === 503) throw new Error("Service down — 2 min baad try karo");
+    if (res.status === 400) throw new Error(`Bad request — ${msg}`);
     throw new Error(msg);
   }
 
   try {
     const data = await res.json();
-    _breakerSuccess();
-    return data.choices[0].message.content;
+    _breakerSuccess(providerId);
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error("Empty response from AI");
+    return content;
   } catch (err) {
-    _breakerFailure();
+    _breakerFailure(providerId);
+    console.error("[aiProvider] response parse failed:", err.message);
     throw new Error("AI response parse nahi hua — dobara try karo");
   }
 }
@@ -146,9 +184,8 @@ async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt }
 // Adding a new provider: add to CONFIG.PROVIDERS in config.js. If apiFormat="openai" → works automatically.
 
 async function _call({ systemPrompt, userPrompt, apiKey }) {
-  _breakerCheck();
-
   const providerId = getProvider();
+  _breakerCheck(providerId);
   const modelId    = getModel();
   const provider   = CONFIG.PROVIDERS[providerId];
 
@@ -161,9 +198,10 @@ async function _call({ systemPrompt, userPrompt, apiKey }) {
     apiKey,
     systemPrompt,
     userPrompt,
+    isGemini:     providerId === "gemini",
+    providerId,
   };
 
-  if (provider.apiFormat === "gemini") return _callOpenAI(params); // gemini uses openai-compat endpoint
   return _callOpenAI(params);
 }
 
@@ -244,4 +282,17 @@ export class GroqAdapter {
       apiKey:       this.apiKey,
     });
   }
+}
+
+
+/**
+ * callAI — exported for groq.js shim and tests.js
+ * Same as _call but exported. Routes through per-provider circuit breaker.
+ * @param {string} userPrompt
+ * @param {string} systemPrompt
+ * @param {string} apiKey
+ * @returns {Promise<string>}
+ */
+export async function callAI(userPrompt, systemPrompt, apiKey) {
+  return _call({ userPrompt, systemPrompt, apiKey });
 }
