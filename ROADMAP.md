@@ -61,8 +61,8 @@
 
 | Feature | Why |
 |---|---|
-| Gemini API support | Users who prefer Google's free tier — 1-file change in `aiProvider.js` |
-| OpenAI / Mistral support | More model choices, same adapter interface |
+| More models added from groq | ✅ Shipped |
+| Mistral support | ✅ Shipped |
 | Resume templates download | Role-specific templates — PM, SDE, BA ready to fill |
 | LinkedIn optimization tool | After resume, fix LinkedIn profile too |
 
