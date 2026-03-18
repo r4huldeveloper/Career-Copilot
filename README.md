@@ -238,7 +238,7 @@ Contributions welcome! Read [CONTRIBUTING.md](CONTRIBUTING.md) first, then check
 
 ## 📜 License
 
-[MIT](LICENSE) — free to use, modify, distribute.
+[AGPLv3](LICENSE) — This project is licensed under the AGPL v3.0. We welcome contributions! However, please note that the Career Copilot brand and UI design are proprietary. If you wish to use this software for commercial purposes without the restrictions of the AGPL, please contact us for a commercial license.
 
 ---
 
