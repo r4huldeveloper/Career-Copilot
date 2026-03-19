@@ -29,6 +29,7 @@ function corsHeaders(origin, env) {
     allowed === '*' ||
     origin === allowed ||
     origin === 'https://careercopilot.in' ||
+    origin === 'https://www.careercopilot.in' ||    
     origin?.endsWith('.vercel.app') ||
     origin?.endsWith('.workers.dev') ||
     /^http:\/\/127\.0\.0\.1:\d+$/.test(origin) ||   // any localhost port
