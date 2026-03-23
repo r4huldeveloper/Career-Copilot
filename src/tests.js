@@ -211,10 +211,10 @@ function testProviderStorage() {
   console.groupEnd();
 }
 
-// ── v0.2.0 → v0.3.1 migration test ───────────────────────────────────────────
+// ── v0.2.0 → v0.3.0 migration test ───────────────────────────────────────────
 
 function testV02Migration() {
-  console.group("🔄 v0.2.0 → v0.3.1 migration");
+  console.group("🔄 v0.2.0 → v0.3.0 migration");
 
   // Simulate v0.2.0 state: key stored under old name
   localStorage.removeItem("cc_api_key");
