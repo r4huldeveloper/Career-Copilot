@@ -24,6 +24,7 @@ import {
   interviewQuestionSystemPrompt,
   evaluateAnswerSystemPrompt,
   answerTipsSystemPrompt,
+  roastSystemPrompt,
 } from "../prompts/groqPrompts.js";
 
 // ── Session Cache ─────────────────────────────────────────────────────────────
@@ -279,6 +280,15 @@ export class GroqAdapter {
     return _call({
       systemPrompt: answerTipsSystemPrompt(),
       userPrompt:   `Question: ${question}\nRole: ${role}\nType: ${type}`,
+      apiKey:       this.apiKey,
+    });
+  }
+
+  async roastResume({ resumeText, targetRole }) {
+    // No cache — roast should feel fresh every time
+    return _call({
+      systemPrompt: roastSystemPrompt(targetRole),
+      userPrompt:   `Target Role: ${targetRole}\n\nResume:\n${resumeText.slice(0, CONFIG.MAX_RESUME_LENGTH)}`,
       apiKey:       this.apiKey,
     });
   }

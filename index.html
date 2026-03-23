@@ -23,6 +23,8 @@
   <link rel="stylesheet" href="src/styles/components.css">
   <link rel="stylesheet" href="src/styles/layout.css">
   <link rel="stylesheet" href="src/styles/statsPanel.css">
+  <link rel="stylesheet" href="src/styles/roastCard.css">
+  <link rel="stylesheet" href="src/styles/statsPanel.css">
   <link rel="stylesheet" href="src/styles/statsPanel.css">
 
   <!-- Vercel Analytics -->
@@ -289,6 +291,12 @@
                 <button type="button" class="btn btn--secondary btn--full mt-3" id="role-fit-btn">🎯 Find Best Roles</button>
                 <div class="loading-bar mt-3" id="role-fit-progress">
                   <div class="loading-bar__fill" id="role-fit-bar"></div>
+                </div>
+                <!-- Roast button — hidden until first analysis completes -->
+                <div id="roast-trigger-row" class="hidden">
+                  <button type="button" class="rst-trigger-btn" id="roast-btn">
+                    🔥 Roast My Resume
+                  </button>
                 </div>
               </div>
             </div>

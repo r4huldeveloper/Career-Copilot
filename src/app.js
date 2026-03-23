@@ -20,6 +20,7 @@
 
 import { initFeedbackWidget }               from "./components/feedback.js";
 import { initStatsPanel, trackEvent }       from "./components/statsPanel.js";
+import { renderRoastCard }                  from "./components/roastCard.js";
 import { renderScoreTracker }               from "./components/scoreTracker.js";
 import { renderHistoryList }                from "./components/historyList.js";
 import {
@@ -40,6 +41,7 @@ import { CONFIG }                           from "./config.js";
 // Pure Logic Layer imports (AI_RULES Rule 1 — Abstract Intelligence Core)
 import { runResumeAnalysis, runRoleFitAnalysis } from "./core/logic/resumeLogic.js";
 import { runJdMatch }                            from "./core/logic/jdLogic.js";
+import { runRoastAnalysis }                      from "./core/logic/roastLogic.js";
 import {
   runGenerateQuestion,
   runEvaluateAnswer,
@@ -244,6 +246,9 @@ async function handleAnalyzeResume() {
     renderScoreTracker($("score-tracker-list"));
     initStatsPanel();
     trackEvent('resume', sanitizeUserText($v("resume-role")), getModel());
+    // Reveal roast button after analysis
+    const roastRow = $("roast-trigger-row");
+    if (roastRow) { roastRow.style.display = "block"; roastRow.classList.remove("hidden"); }
 
   } catch (err) {
     stop();
@@ -279,6 +284,29 @@ async function handleAnalyzeRoleFit() {
   }
 
   setBtn("role-fit-btn", false, "🎯 Find Best Roles");
+}
+
+async function handleRoastResume() {
+  const rawText = state.resumeText || $v("resume-text");
+  const role    = sanitizeUserText($v("resume-role"));
+
+  setBtn("roast-btn", true, "🔥 Roasting...");
+
+  try {
+    const roastData = await runRoastAnalysis({
+      resumeText: rawText,
+      targetRole: role,
+      apiKey    : state.apiKey,
+    });
+    const scores   = (await import("./utils/storage.js")).getScores();
+    const atsScore = scores.length ? scores[0].atsScore : null;
+    renderRoastCard({ ...roastData, targetRole: role, atsScore });
+  } catch (err) {
+    console.error("[app] handleRoastResume:", err.message);
+    showError("resume-error", err.message);
+  }
+
+  setBtn("roast-btn", false, "🔥 Roast My Resume");
 }
 
 async function handleMatchJD() {
@@ -417,6 +445,7 @@ function init() {
   // Feature buttons
   $("resume-btn")?.addEventListener("click", handleAnalyzeResume);
   $("role-fit-btn")?.addEventListener("click", handleAnalyzeRoleFit);
+  $("roast-btn")?.addEventListener("click", handleRoastResume);
   $("jd-btn")?.addEventListener("click", handleMatchJD);
   $("gen-btn")?.addEventListener("click", () => handleGenerateQuestion(false));
   $("new-q-btn")?.addEventListener("click", () => handleGenerateQuestion(true));

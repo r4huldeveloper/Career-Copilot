@@ -1,0 +1,151 @@
+/*
+ * roastCard.css — Career Copilot v0.4.1
+ * Prefix: .rst-* — zero conflict
+ */
+
+@keyframes rst-in  { from{opacity:0} to{opacity:1} }
+@keyframes rst-out { from{opacity:1} to{opacity:0} }
+@keyframes rst-min { from{opacity:0;transform:translateY(22px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes rst-row { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+@keyframes rst-bar { 0%{background-position:0 0} 100%{background-position:300% 0} }
+
+/* Trigger */
+.rst-trigger-btn {
+  width:100%; margin-top:var(--space-3);
+  padding:11px 20px;
+  background:var(--color-surface); color:var(--color-text-primary);
+  border:1px solid var(--color-border); border-radius:var(--radius);
+  font-size:var(--text-base); font-weight:var(--weight-medium); font-family:var(--font-sans);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:var(--space-2);
+  transition:background var(--transition-base),border-color var(--transition-base);
+}
+.rst-trigger-btn:hover { background:var(--color-bg); border-color:var(--color-border-strong); }
+.rst-trigger-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+/* Overlay */
+.rst-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9999;
+  display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0;
+}
+.rst-overlay--in  { animation:rst-in  .22s ease forwards; }
+.rst-overlay--out { animation:rst-out .25s ease forwards; }
+.rst-overlay--in .rst-modal { animation:rst-min .35s cubic-bezier(.22,1,.36,1) forwards; }
+
+/* Modal */
+.rst-modal {
+  position:relative; width:100%; max-width:540px;
+  max-height:92vh; overflow-y:auto; border-radius:20px; opacity:0;
+}
+
+/* Close */
+.rst-close {
+  position:absolute; top:12px; right:12px;
+  width:28px; height:28px; border-radius:7px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.7); font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:10; transition:background .15s;
+}
+.rst-close:hover { background:rgba(255,255,255,.16); color:#fff; }
+
+/* Card */
+.rst-card { background:#0f0f11; border-radius:18px 18px 0 0; overflow:hidden; }
+
+/* Animated bar */
+.rst-bar {
+  height:4px;
+  background:linear-gradient(90deg,#ff1a1a,#ff7700,#ffbb00,#ff7700,#ff1a1a);
+  background-size:300% 100%;
+  animation:rst-bar 2.5s linear infinite;
+}
+
+/* Head */
+.rst-head { padding:20px 22px 16px; border-bottom:1px solid #1e1e22; }
+.rst-top-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.rst-eyebrow { font-size:11px; font-weight:800; color:#ff3f3f; text-transform:uppercase; letter-spacing:.12em; }
+.rst-chip {
+  background:#ff3f3f18; border:1px solid #ff3f3f45;
+  color:#ff6060; font-size:11px; font-weight:800; padding:4px 13px; border-radius:99px;
+}
+.rst-title { font-size:20px; font-weight:900; color:#ffffff; line-height:1.3; letter-spacing:-.02em; }
+
+/* Body */
+.rst-body { padding:0 22px; }
+.rst-lbl { font-size:10px; font-weight:700; color:#3a3a3f; text-transform:uppercase; letter-spacing:.14em; padding:14px 0 8px; }
+
+.rst-line {
+  display:flex; gap:12px; padding:14px 0; border-bottom:1px solid #1a1a1e;
+  opacity:0; animation:rst-row .4s ease forwards;
+}
+.rst-line--1{animation-delay:.1s} .rst-line--2{animation-delay:.2s} .rst-line--3{animation-delay:.3s}
+.rst-line:last-child { border-bottom:none; }
+
+.rst-num {
+  width:24px; height:24px; border-radius:6px;
+  background:#ff3f3f15; border:1px solid #ff3f3f35;
+  color:#ff4f4f; font-size:9px; font-weight:900; font-family:monospace;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;
+}
+
+/* KEY: pure white text for maximum readability */
+.rst-txt { font-size:14px; color:#f0f0f2; line-height:1.6; font-weight:400; }
+
+/* Hope */
+.rst-hope {
+  display:flex; align-items:flex-start; gap:10px;
+  margin:8px 22px 0; padding:14px 16px;
+  background:#0b1d0d; border:1px solid #1a3b1e; border-radius:12px;
+}
+.rst-hope-ic { color:#4ade80; font-size:13px; flex-shrink:0; margin-top:1px; }
+.rst-hope-txt { font-size:13px; color:#7fd68a; line-height:1.6; font-style:italic; font-weight:500; }
+
+/* Footer */
+.rst-foot {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 22px; margin-top:14px;
+  background:#0a0a0c; border-top:1px solid #1a1a1e;
+}
+.rst-role { display:flex; align-items:center; gap:8px; }
+.rst-role-lbl { font-size:9px; color:#3a3a3f; text-transform:uppercase; letter-spacing:.1em; }
+.rst-role-val {
+  font-size:11px; font-weight:700; color:#777;
+  background:#161618; padding:3px 11px; border-radius:99px; border:1px solid #222;
+}
+.rst-wm { font-size:12px; font-weight:800; color:#2a2a2e; }
+.rst-wm b { color:#cc2222; font-weight:800; }
+
+/* Buttons */
+.rst-btns {
+  display:flex; gap:8px; padding:12px 14px;
+  background:#ffffff; border-radius:0 0 18px 18px; border-top:1px solid #e5e7eb;
+}
+.rst-btn {
+  flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px 12px; border-radius:9px;
+  font-size:13px; font-weight:700; cursor:pointer; border:none;
+  font-family:var(--font-sans);
+  transition:opacity .15s, transform .1s;
+  white-space:nowrap;
+}
+.rst-btn:hover  { opacity:.88; }
+.rst-btn:active { transform:scale(.97); }
+.rst-btn:disabled { opacity:.5; cursor:not-allowed; }
+.rst-btn--dl { background:#f3f4f6; color:#111827; border:1px solid #e5e7eb; }
+.rst-btn--cp { background:#0a66c2; color:#fff; }
+.rst-btn--tw { background:#000; color:#fff; }
+
+/* Responsive */
+@media (max-width:600px) {
+  .rst-overlay { align-items:flex-end; padding:0; }
+  .rst-modal   { max-height:96vh; border-radius:20px 20px 0 0; }
+  .rst-card    { border-radius:20px 20px 0 0; }
+  .rst-head    { padding:16px 18px 14px; }
+  .rst-body    { padding:0 18px; }
+  .rst-hope    { margin:8px 18px 0; }
+  .rst-foot    { padding:12px 18px; }
+  .rst-btns    { flex-direction:column; }
+  .rst-title   { font-size:17px; }
+}
+
+[data-theme="dark"] .rst-btns    { background:#18181b; border-top-color:#27272a; }
+[data-theme="dark"] .rst-btn--dl { background:#27272a; color:#fafafa; border-color:#3f3f46; }

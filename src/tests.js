@@ -451,6 +451,66 @@ function testStatsPanel() {
   console.groupEnd();
 }
 
+// ── roastLogic.js tests ───────────────────────────────────────────────────────
+
+import { parseRoast } from "./core/logic/roastLogic.js";
+
+function testRoastParser() {
+  console.group("🔥 roastLogic.js — parseRoast()");
+
+  // Happy path — all 5 fields present
+  const full = `
+ROAST_LINE_1: Team player likha hai — bhai, sab likhte hain.
+ROAST_LINE_2: "Managed 100+ projects" — ek saath 100 Netflix series bhi dekhi kya?
+ROAST_LINE_3: Skills mein MS Word likha hai — bhai, 2024 mein yeh flex nahi hai.
+HOPE_LINE: Par seriously, tu yahan hai — yahi cheez tujhe alag karti hai!
+ROAST_TITLE: The Copy-Paste King
+  `.trim();
+
+  const r1 = parseRoast(full);
+  assertEqual("Happy path: 3 lines parsed",   r1.lines.length, 3);
+  assert("Happy path: line 1 non-empty",       r1.lines[0].length > 0);
+  assert("Happy path: line 2 non-empty",       r1.lines[1].length > 0);
+  assert("Happy path: line 3 non-empty",       r1.lines[2].length > 0);
+  assert("Happy path: hopeL non-empty",        r1.hopeL.length > 0);
+  assert("Happy path: title non-empty",        r1.title.length > 0);
+  assert("Happy path: title correct",          r1.title.includes('Copy-Paste'));
+
+  // Missing fields — graceful degradation, must not throw
+  let threw = false;
+  let r2;
+  try { r2 = parseRoast("No labels here at all"); } catch { threw = true; }
+  assert("Malformed input does not throw",     !threw);
+  assert("Malformed: lines array returned",    Array.isArray(r2?.lines));
+
+  // Null / empty input — must not throw
+  let r3, r4;
+  try { r3 = parseRoast(null); }  catch { threw = true; }
+  try { r4 = parseRoast(''); }    catch { threw = true; }
+  assert("Null input does not throw",          !threw);
+  assert("Empty string does not throw",        !threw);
+  assertEqual("Null returns empty lines",      r3?.lines?.length ?? 0, 0);
+  assertEqual("Empty returns empty lines",     r4?.lines?.length ?? 0, 0);
+
+  // Partial output — only 1 line present
+  const partial = `ROAST_LINE_1: Only one roast line here.`;
+  const r5 = parseRoast(partial);
+  assertEqual("Partial: 1 line parsed",        r5.lines.length, 1);
+  assertEqual("Partial: hopeL empty",          r5.hopeL, '');
+  assertEqual("Partial: title empty",          r5.title, '');
+
+  // Fallback pattern — lowercase labels
+  const lower = `
+roast_line_1: lowercase label test
+hope_line: lowercase hope
+roast_title: lowercase title
+  `.trim();
+  const r6 = parseRoast(lower);
+  assert("Fallback: lowercase label parsed",   r6.lines.length >= 1);
+
+  console.groupEnd();
+}
+
 // ── Main Runner ───────────────────────────────────────────────────────────────
 
 /**
@@ -475,6 +535,7 @@ export async function runTests() {
   testScoreTracker();
   testHistoryList();
   testStatsPanel();
+  testRoastParser();
 
   console.groupEnd();
 
