@@ -135,7 +135,7 @@ function renderPanel({ counters, modelUsage, recentActivity }) {
         <div class="stp-card" style="--stp-i:.36s">
           <div class="stp-card__head">Recent activity</div>
           <div class="stp-feed">
-            ${recentActivity.length ? recentActivity.map((ev,i) => {
+            ${recentActivity.length ? recentActivity.slice(0,4).map((ev,i) => {
               const c       = getRoleColor(ev.role);
               const mColor  = getMC(ev.model);
               const label   = TOOL_LABELS[ev.tool] || ev.tool;
