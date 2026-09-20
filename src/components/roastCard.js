@@ -4,6 +4,8 @@
  * PNG via Canvas API — no html2canvas, guaranteed output
  */
 
+import { trackFunnelEvent } from "../utils/analytics.js";
+
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
@@ -16,233 +18,235 @@ function rr(ctx, x, y, w, h, r) {
   ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
 }
 
-function wrapText(ctx, text, x, y, maxW, lh) {
-  const words = text.split(' '); let line = '';
+/* ── Poster geometry — 4:5, the ratio LinkedIn and Instagram give most feed space ── */
+const CARD_W = 1080;
+const CARD_H = 1350;
+const PAD    = 76;
+const TW     = CARD_W - PAD * 2;
+
+const FONT = (weight, size) =>
+  `${weight} ${size}px 'Geist', system-ui, -apple-system, Arial, sans-serif`;
+
+function wrapLines(ctx, text, maxW) {
+  const words = String(text||'').split(/\s+/).filter(Boolean);
+  const out   = [];
+  let   line  = '';
   for (const w of words) {
     const t = line ? line+' '+w : w;
-    if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line,x,y); y+=lh; line=w; }
-    else { line=t; }
+    if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; }
+    else { line = t; }
   }
-  if (line) { ctx.fillText(line,x,y); y+=lh; }
-  return y;
+  if (line) out.push(line);
+  return out;
 }
 
-function countLines(ctx, text, maxW) {
-  const words = text.split(' '); let line=''; let n=0;
-  for (const w of words) {
-    const t = line ? line+' '+w : w;
-    if (ctx.measureText(t).width > maxW && line) { n++; line=w; } else { line=t; }
+/** Step type down until the text fits maxLines, so the poster never overflows */
+function fitText(ctx, text, maxW, weight, from, to, maxLines) {
+  for (let size = from; size >= to; size -= 2) {
+    ctx.font = FONT(weight, size);
+    const lines = wrapLines(ctx, text, maxW);
+    if (lines.length <= maxLines) return { size, lines };
   }
-  return line ? n+1 : n;
+  ctx.font = FONT(weight, to);
+  return { size: to, lines: wrapLines(ctx, text, maxW).slice(0, maxLines) };
+}
+
+function paintLines(ctx, lines, x, baseline, lh) {
+  lines.forEach((l, i) => ctx.fillText(l, x, baseline + i * lh));
 }
 
 function generatePNG({ lines, hopeL, title, targetRole, atsScore }) {
   const cv  = document.createElement('canvas');
-  const W   = 760;
-  const PAD = 48;
-  const TW  = W - PAD * 2;
-  const SF  = 'system-ui,-apple-system,Arial,sans-serif';
-  cv.width  = W;
-
+  cv.width  = CARD_W;
+  cv.height = CARD_H;
   const ctx = cv.getContext('2d');
+  ctx.textBaseline = 'alphabetic';
 
-  // ── measure total height first ──────────────────────────────────────────
-  function countW(text, font, maxW) {
-    ctx.font = font;
-    const words = text.split(' '); let line = ''; let n = 0;
-    for (const w of words) {
-      const t = line ? line+' '+w : w;
-      if (ctx.measureText(t).width > maxW && line) { n++; line=w; } else { line=t; }
-    }
-    return line ? n+1 : n;
-  }
+  /* ── Background: near-black with a warm ember glow ── */
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
 
-  const titleLines = countW(`"${title}"`, `800 32px ${SF}`, TW);
-  let   bodyH = 0;
-  lines.forEach(l => { bodyH += countW(l, `400 22px ${SF}`, TW-52)*32+44; });
-  const hopeLines = countW(hopeL, `500 20px ${SF}`, TW-48);
-  const hopeH     = hopeLines * 30 + 48;
+  const glow = ctx.createRadialGradient(150, 40, 0, 150, 40, 1000);
+  glow.addColorStop(0,    'rgba(255,94,0,0.22)');
+  glow.addColorStop(0.45, 'rgba(255,26,26,0.07)');
+  glow.addColorStop(1,    'rgba(255,26,26,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
 
-  // LAYOUT constants — measured from top
-  const TOP_PAD    = 32;   // space above eyebrow
-  const BAR_H      = 6;
-  const EYEBROW_Y  = BAR_H + TOP_PAD + 14;   // 52
-  const TITLE_Y    = EYEBROW_Y + 28;
-  const TITLE_H    = titleLines * 44;
-  const DIV1_Y     = TITLE_Y + TITLE_H + 8;
-  const VERDICT_Y  = DIV1_Y + 24;
-  const BODY_Y     = VERDICT_Y + 20;
-  const HOPE_Y     = BODY_Y + bodyH + 8;
-  const DIV2_Y     = HOPE_Y + hopeH + 20;
-  const FOOT_Y     = DIV2_Y + 28;
-  cv.height        = FOOT_Y + 24;
+  const topBar = ctx.createLinearGradient(0, 0, CARD_W, 0);
+  topBar.addColorStop(0,   '#ff1a1a');
+  topBar.addColorStop(0.5, '#ff9500');
+  topBar.addColorStop(1,   '#ff1a1a');
+  ctx.fillStyle = topBar;
+  ctx.fillRect(0, 0, CARD_W, 14);
 
-  // ── BACKGROUND — off-white light theme ──────────────────────────────────
-  ctx.fillStyle = '#fafafa';
-  ctx.fillRect(0, 0, W, cv.height);
-
-  // subtle card border
-  ctx.strokeStyle = '#e2e2e6';
-  ctx.lineWidth   = 1;
-  ctx.strokeRect(0, 0, W, cv.height);
-
-  // ── TOP BAR — bold red-orange ────────────────────────────────────────────
-  const grad = ctx.createLinearGradient(0, 0, W, 0);
-  grad.addColorStop(0,   '#ff1a1a');
-  grad.addColorStop(0.5, '#ff5500');
-  grad.addColorStop(1,   '#ff1a1a');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, BAR_H);
-
-  // ── EYEBROW ──────────────────────────────────────────────────────────────
-  ctx.font      = `700 11px ${SF}`;
-  ctx.fillStyle = '#cc2200';
-  ctx.letterSpacing = '2.5px';
-  ctx.fillText('RESUME ROASTED', PAD, EYEBROW_Y);
+  /* ── Eyebrow + ATS pill ── */
+  const EYE_Y = 156;
+  ctx.font          = FONT(800, 26);
+  ctx.letterSpacing = '5px';
+  ctx.fillStyle     = '#ff7a33';
+  ctx.fillText('RESUME ROASTED', PAD, EYE_Y);
   ctx.letterSpacing = '0px';
 
-  // ATS chip — top right
   if (atsScore != null) {
-    const chip = `ATS ${atsScore}/10`;
-    ctx.font   = `700 12px ${SF}`;
-    const cw   = ctx.measureText(chip).width + 24;
-    const cx   = W - PAD - cw;
-    const cy   = EYEBROW_Y - 15;
-    ctx.fillStyle   = '#fff0f0';
-    rr(ctx, cx, cy, cw, 24, 12); ctx.fill();
-    ctx.strokeStyle = '#ffaaaa';
-    ctx.lineWidth   = 1;
-    rr(ctx, cx, cy, cw, 24, 12); ctx.stroke();
-    ctx.fillStyle = '#cc2200';
-    ctx.fillText(chip, cx + 12, EYEBROW_Y);
+    const pill = `ATS ${atsScore}/10`;
+    ctx.font   = FONT(800, 25);
+    const pw   = ctx.measureText(pill).width + 46;
+    const px   = CARD_W - PAD - pw;
+    const py   = EYE_Y - 34;
+    ctx.fillStyle = 'rgba(255,63,63,0.13)';
+    rr(ctx, px, py, pw, 48, 24); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,110,70,0.42)';
+    ctx.lineWidth   = 2;
+    rr(ctx, px, py, pw, 48, 24); ctx.stroke();
+    ctx.fillStyle = '#ff9070';
+    ctx.fillText(pill, px + 23, EYE_Y);
   }
 
-  // ── TITLE ────────────────────────────────────────────────────────────────
-  ctx.font         = `900 32px ${SF}`;
-  ctx.fillStyle    = '#111111';
-  ctx.letterSpacing = '-0.5px';
-  let ty = TITLE_Y;
-  const titleWords = `"${title}"`.split(' ');
-  let   tLine = '';
-  for (const w of titleWords) {
-    const test = tLine ? tLine+' '+w : w;
-    if (ctx.measureText(test).width > TW && tLine) {
-      ctx.fillText(tLine, PAD, ty); ty += 44; tLine = w;
-    } else { tLine = test; }
+  /* ── Title: the hook, so it gets the biggest type that still fits ── */
+  const TITLE_Y = 268;
+  const titleFit = fitText(ctx, `"${title}"`, TW, 900, 86, 48, 3);
+  const titleLH  = Math.round(titleFit.size * 1.14);
+  ctx.font          = FONT(900, titleFit.size);
+  ctx.fillStyle     = '#ffffff';
+  ctx.letterSpacing = '-1.5px';
+  paintLines(ctx, titleFit.lines, PAD, TITLE_Y, titleLH);
+  ctx.letterSpacing = '0px';
+  const titleBottom = TITLE_Y + (titleFit.lines.length - 1) * titleLH;
+
+  /* ── Footer and hope block are pinned to the bottom, body fills what is left ── */
+  const FOOT_Y = CARD_H - 80;
+  const DIV2_Y = FOOT_Y - 68;
+
+  const hopeFit = fitText(ctx, hopeL, TW - 112, 500, 34, 22, 3);
+  const hopeLH  = Math.round(hopeFit.size * 1.45);
+  const hopeH   = hopeFit.lines.length * hopeLH + 56;
+  const hopeTop = DIV2_Y - 44 - hopeH;
+
+  const LABEL_Y = titleBottom + 74;
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+  ctx.lineWidth   = 2;
+  ctx.moveTo(PAD, LABEL_Y - 40); ctx.lineTo(CARD_W - PAD, LABEL_Y - 40);
+  ctx.stroke();
+
+  ctx.font          = FONT(700, 20);
+  ctx.letterSpacing = '3.5px';
+  ctx.fillStyle     = '#6b6b7a';
+  ctx.fillText('THE VERDICT', PAD, LABEL_Y);
+  ctx.letterSpacing = '0px';
+
+  /* ── Roast lines ── */
+  const BODY_TOP  = LABEL_Y + 62;
+  const bodyAvail = hopeTop - 44 - BODY_TOP;
+  const GAP       = 40;
+  const TEXT_X    = PAD + 42;
+  const textW     = TW - 42;
+
+  let bodySize  = 24;
+  let bodyWraps = [];
+  let bodyTotal = 0;
+  for (let size = 40; size >= 24; size -= 2) {
+    ctx.font = FONT(500, size);
+    const wraps = lines.map((l) => wrapLines(ctx, l, textW));
+    const lh    = Math.round(size * 1.42);
+    const total = wraps.reduce((a, w) => a + w.length * lh, 0) + GAP * (wraps.length - 1);
+    if (total <= bodyAvail || size === 24) { bodySize = size; bodyWraps = wraps; bodyTotal = total; break; }
   }
-  if (tLine) ctx.fillText(tLine, PAD, ty);
-  ctx.letterSpacing = '0px';
+  const bodyLH = Math.round(bodySize * 1.42);
 
-  // ── DIVIDER 1 ────────────────────────────────────────────────────────────
-  ctx.strokeStyle = '#e0e0e4';
-  ctx.lineWidth   = 1;
-  ctx.beginPath(); ctx.moveTo(PAD, DIV1_Y); ctx.lineTo(W-PAD, DIV1_Y); ctx.stroke();
+  // Centre the block so short roasts don't leave a hole above the hope line
+  let ly = BODY_TOP + Math.max(0, (bodyAvail - bodyTotal) / 2);
+  bodyWraps.forEach((wraps) => {
+    const blockH = wraps.length * bodyLH;
 
-  // ── VERDICT LABEL ────────────────────────────────────────────────────────
-  ctx.font         = `600 10px ${SF}`;
-  ctx.fillStyle    = '#aaaaaf';
-  ctx.letterSpacing = '2px';
-  ctx.fillText('THE AI VERDICT IS IN —', PAD, VERDICT_Y);
-  ctx.letterSpacing = '0px';
+    const accent = ctx.createLinearGradient(0, ly - bodySize, 0, ly + blockH);
+    accent.addColorStop(0, '#ff3d00');
+    accent.addColorStop(1, '#ffab00');
+    ctx.fillStyle = accent;
+    rr(ctx, PAD, ly - bodySize, 6, blockH - (bodyLH - bodySize) + 8, 3);
+    ctx.fill();
 
-  // ── ROAST LINES ──────────────────────────────────────────────────────────
-  let ly = BODY_Y + 16;
-  lines.forEach((line, i) => {
-    // number badge
-    ctx.fillStyle   = '#fff0f0';
-    rr(ctx, PAD, ly-16, 26, 24, 6); ctx.fill();
-    ctx.strokeStyle = '#ffcccc';
-    ctx.lineWidth   = 1;
-    rr(ctx, PAD, ly-16, 26, 24, 6); ctx.stroke();
-    ctx.font      = `700 10px monospace`;
-    ctx.fillStyle = '#cc2200';
-    ctx.fillText(String(i+1).padStart(2,'0'), PAD+4, ly);
+    ctx.font      = FONT(500, bodySize);
+    ctx.fillStyle = '#f2f2f5';
+    paintLines(ctx, wraps, TEXT_X, ly, bodyLH);
 
-    // line text — dark on light bg
-    ctx.font      = `400 22px ${SF}`;
-    ctx.fillStyle = '#1a1a1a';
-    const words   = line.split(' ');
-    let   ltext   = '';
-    let   lty     = ly;
-    for (const w of words) {
-      const test = ltext ? ltext+' '+w : w;
-      if (ctx.measureText(test).width > TW-52 && ltext) {
-        ctx.fillText(ltext, PAD+38, lty); lty+=32; ltext=w;
-      } else { ltext=test; }
-    }
-    if (ltext) ctx.fillText(ltext, PAD+38, lty);
-    ly = lty + 32 + 12;
-
-    // separator
-    if (i < lines.length-1) {
-      ctx.strokeStyle = '#ebebef';
-      ctx.lineWidth   = 1;
-      ctx.beginPath(); ctx.moveTo(PAD+38, ly-4); ctx.lineTo(W-PAD, ly-4); ctx.stroke();
-      ly += 8;
-    }
+    ly += blockH + GAP;
   });
 
-  // ── HOPE SECTION ─────────────────────────────────────────────────────────
-  ctx.fillStyle   = '#f0fdf4';
-  rr(ctx, PAD, HOPE_Y, TW, hopeH, 12); ctx.fill();
-  ctx.strokeStyle = '#bbf7d0';
-  ctx.lineWidth   = 1;
-  rr(ctx, PAD, HOPE_Y, TW, hopeH, 12); ctx.stroke();
+  /* ── Hope line ── */
+  ctx.fillStyle = 'rgba(34,197,94,0.10)';
+  rr(ctx, PAD, hopeTop, TW, hopeH, 20); ctx.fill();
+  ctx.strokeStyle = 'rgba(74,222,128,0.28)';
+  ctx.lineWidth   = 2;
+  rr(ctx, PAD, hopeTop, TW, hopeH, 20); ctx.stroke();
 
-  ctx.font      = `400 18px ${SF}`;
-  ctx.fillStyle = '#16a34a';
-  ctx.fillText('✦', PAD+16, HOPE_Y+26);
+  const hopeBase = hopeTop + 28 + hopeFit.size;
+  ctx.font      = FONT(700, 28);
+  ctx.fillStyle = '#4ade80';
+  ctx.fillText('✦', PAD + 32, hopeBase);
 
-  ctx.font      = `500 20px ${SF}`;
-  ctx.fillStyle = '#15803d';
-  const hwords  = hopeL.split(' ');
-  let   hline   = '';
-  let   hty     = HOPE_Y + 26;
-  for (const w of hwords) {
-    const test = hline ? hline+' '+w : w;
-    if (ctx.measureText(test).width > TW-48 && hline) {
-      ctx.fillText(hline, PAD+42, hty); hty+=30; hline=w;
-    } else { hline=test; }
-  }
-  if (hline) ctx.fillText(hline, PAD+42, hty);
+  ctx.font      = FONT(500, hopeFit.size);
+  ctx.fillStyle = '#9ff0b0';
+  paintLines(ctx, hopeFit.lines, PAD + 80, hopeBase, hopeLH);
 
-  // ── DIVIDER 2 ────────────────────────────────────────────────────────────
-  ctx.strokeStyle = '#e0e0e4';
-  ctx.lineWidth   = 1;
-  ctx.beginPath(); ctx.moveTo(PAD, DIV2_Y); ctx.lineTo(W-PAD, DIV2_Y); ctx.stroke();
+  /* ── Footer ── */
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth   = 2;
+  ctx.moveTo(PAD, DIV2_Y); ctx.lineTo(CARD_W - PAD, DIV2_Y);
+  ctx.stroke();
 
-  // ── FOOTER ───────────────────────────────────────────────────────────────
-  // TARGET label
-  ctx.font         = `700 10px ${SF}`;
-  ctx.fillStyle    = '#888890';
-  ctx.letterSpacing = '1.5px';
-  ctx.fillText('TARGET', PAD, FOOT_Y);
-  ctx.letterSpacing = '0px';
+  const role = targetRole || 'General';
+  ctx.font   = FONT(600, 24);
+  const rw   = ctx.measureText(role).width + 40;
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  rr(ctx, PAD, FOOT_Y - 30, rw, 44, 22); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth   = 2;
+  rr(ctx, PAD, FOOT_Y - 30, rw, 44, 22); ctx.stroke();
+  ctx.fillStyle = '#a1a1b0';
+  ctx.fillText(role, PAD + 20, FOOT_Y);
 
-  // Role chip
-  const rv  = targetRole || 'General';
-  ctx.font  = `600 13px ${SF}`;
-  const rvW = ctx.measureText(rv).width + 24;
-  ctx.fillStyle   = '#f3f4f6';
-  rr(ctx, PAD+62, FOOT_Y-15, rvW, 22, 11); ctx.fill();
-  ctx.strokeStyle = '#d1d5db';
-  ctx.lineWidth   = 1;
-  rr(ctx, PAD+62, FOOT_Y-15, rvW, 22, 11); ctx.stroke();
-  ctx.fillStyle   = '#374151';
-  ctx.fillText(rv, PAD+74, FOOT_Y);
-
-  // Watermark — clear and prominent
-  ctx.font = `800 16px ${SF}`;
-  const wparts = [['career','#555560'],['copilot','#cc2200'],['.in','#555560']];
-  const wtotal = wparts.reduce((a,[t]) => a + ctx.measureText(t).width, 0);
-  let   wx     = W - PAD - wtotal;
-  wparts.forEach(([t,c]) => {
+  ctx.font = FONT(800, 28);
+  const wm = [['career', '#e7e7ee'], ['copilot', '#ff6a1f'], ['.in', '#e7e7ee']];
+  let wx = CARD_W - PAD - wm.reduce((a, [t]) => a + ctx.measureText(t).width, 0);
+  wm.forEach(([t, c]) => {
     ctx.fillStyle = c;
     ctx.fillText(t, wx, FOOT_Y);
     wx += ctx.measureText(t).width;
   });
 
   return cv;
+}
+
+const PNG_NAME = 'resume-roast-careercopilot.png';
+
+/**
+ * Sync base64 → File. toBlob() is async and Safari drops the user gesture
+ * across the callback, which makes navigator.share() reject.
+ */
+function canvasToFile(cv) {
+  const dataUrl = cv.toDataURL('image/png');
+  const binary  = atob(dataUrl.slice(dataUrl.indexOf(',') + 1));
+  const bytes   = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], PNG_NAME, { type: 'image/png' });
+}
+
+/** Native share only on touch devices — on desktop the OS share sheet is worse than a download */
+function canSharePNG() {
+  if (!window.matchMedia?.('(pointer: coarse)').matches) return false;
+  try {
+    return !!navigator.canShare?.({ files: [new File([new Uint8Array(1)], PNG_NAME, { type: 'image/png' })] });
+  } catch { return false; }
+}
+
+function downloadPNG(cv) {
+  const a = document.createElement('a');
+  a.download = PNG_NAME;
+  a.href     = cv.toDataURL('image/png');
+  a.click();
 }
 
 function shareText(title, role, score, lines) {
@@ -271,18 +275,18 @@ function buildModal({ lines, hopeL, title, targetRole, atsScore }) {
       <button class="rst-close" id="rst-close" aria-label="Close">&#x2715;</button>
       <div class="rst-card">
         <div class="rst-bar"></div>
+        <div class="rst-glow"></div>
         <div class="rst-head">
           <div class="rst-top-row">
-            <span class="rst-eyebrow">🔥 Resume Roasted</span>
+            <span class="rst-eyebrow">Resume Roasted</span>
             <span class="rst-chip">${esc(sc)}</span>
           </div>
           <h2 class="rst-title">"${esc(title)}"</h2>
         </div>
         <div class="rst-body">
-          <p class="rst-lbl">🤖 The AI verdict is in —</p>
+          <p class="rst-lbl">The verdict</p>
           ${lines.map((l,i)=>`
           <div class="rst-line rst-line--${i+1}">
-            <span class="rst-num">${String(i+1).padStart(2,'0')}</span>
             <p class="rst-txt">${esc(l)}</p>
           </div>`).join('')}
         </div>
@@ -291,14 +295,17 @@ function buildModal({ lines, hopeL, title, targetRole, atsScore }) {
           <p class="rst-hope-txt">${esc(hopeL)}</p>
         </div>
         <div class="rst-foot">
-          <div class="rst-role"><span class="rst-role-lbl">Target</span><span class="rst-role-val">${esc(targetRole||'General')}</span></div>
+          <span class="rst-role-val">${esc(targetRole||'General')}</span>
           <span class="rst-wm">career<b>copilot</b>.in</span>
         </div>
       </div>
       <div class="rst-btns">
-        <button class="rst-btn rst-btn--dl" id="rst-dl" type="button">⬇ Download PNG</button>
-        <button class="rst-btn rst-btn--cp" id="rst-cp" type="button">📋 Copy for LinkedIn</button>
-        <button class="rst-btn rst-btn--tw" id="rst-tw" type="button">𝕏 Post on X</button>
+        <button class="rst-btn rst-btn--main" id="rst-dl" type="button">${canSharePNG() ? '📤 Share card' : '⬇ Download card'}</button>
+        <div class="rst-btn-row">
+          <button class="rst-btn rst-btn--ghost" id="rst-cp" type="button">📋 Copy caption</button>
+          <button class="rst-btn rst-btn--ghost" id="rst-tw" type="button">𝕏 Post on X</button>
+        </div>
+        <button class="rst-next" id="rst-next" type="button">Ab serious feedback bhi le lo — ATS score &amp; role fit →</button>
       </div>
     </div>
   </div>`;
@@ -322,10 +329,28 @@ export function renderRoastCard(data) {
   ov.addEventListener('click',e=>{ if(e.target===ov) closeModal(); });
   document.addEventListener('keydown',function f(e){ if(e.key==='Escape'){closeModal();document.removeEventListener('keydown',f);} });
 
-  document.getElementById('rst-dl')?.addEventListener('click',e=>{
+  document.getElementById('rst-dl')?.addEventListener('click',async e=>{
     const btn=e.currentTarget, orig=btn.innerHTML;
     btn.disabled=true; btn.textContent='Generating...';
-    try { const cv=generatePNG(data); const a=document.createElement('a'); a.download='resume-roast-careercopilot.png'; a.href=cv.toDataURL('image/png'); a.click(); }
+    try {
+      // Canvas measures with the fallback font until Geist is actually loaded
+      await document.fonts?.ready;
+      const cv = generatePNG(data);
+
+      if (canSharePNG()) {
+        try {
+          await navigator.share({ files: [canvasToFile(cv)], text: shareText(data.title,data.targetRole,data.atsScore,data.lines) });
+          trackFunnelEvent("share_clicked", { method: "native" });
+          return;
+        } catch (shareErr) {
+          if (shareErr?.name === 'AbortError') return;   // user dismissed the sheet
+          console.warn('[roastCard] share failed, downloading instead', shareErr);
+        }
+      }
+
+      downloadPNG(cv);
+      trackFunnelEvent("share_clicked", { method: "download" });
+    }
     catch(err){ console.error('[roastCard]',err); }
     finally { btn.disabled=false; btn.innerHTML=orig; }
   });
@@ -344,12 +369,25 @@ export function renderRoastCard(data) {
       document.execCommand('copy');
       ta.remove();
     }
+    trackFunnelEvent("share_clicked", { method: "copy" });
     btn.textContent='✓ Copied!'; setTimeout(()=>{ btn.innerHTML=orig; },2000);
   });
 
-  document.getElementById('rst-tw')?.addEventListener('click',()=>
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText(data.title,data.targetRole,data.atsScore,data.lines))}`,'_blank','noopener,width=600,height=400')
-  );
+  document.getElementById('rst-next')?.addEventListener('click',()=>{
+    trackFunnelEvent("next_action_clicked", { from: "roast", destination: "resume_analysis" });
+    closeModal();
+    // Wait out the close animation — body scroll is locked until the overlay is gone
+    setTimeout(()=>{
+      const target=document.getElementById('resume-btn');
+      target?.scrollIntoView({ behavior:'smooth', block:'center' });
+      target?.focus({ preventScroll:true });
+    },300);
+  });
+
+  document.getElementById('rst-tw')?.addEventListener('click',()=>{
+    trackFunnelEvent("share_clicked", { method: "x" });
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText(data.title,data.targetRole,data.atsScore,data.lines))}`,'_blank','noopener,width=600,height=400');
+  });
 }
 
 export function destroyRoastCard() { closeModal(); }

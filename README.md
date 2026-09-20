@@ -36,9 +36,9 @@
 | 🎤 **Mock Interview** | Real questions by role + type, write your answer, detailed AI feedback + expected answer structure |
 | 📊 **Score Tracker** | ATS score history — track if your resume is improving over time |
 | 📜 **Interview History** | All past mock sessions saved locally — review anytime |
-| 📁 **PDF/DOC Upload** | Drag & drop resume upload — no copy-paste needed |
-| 🔒 **100% Private** | Data never leaves your browser. No server, no tracking, no account needed |
-| 🆓 **Forever Free** | Uses your own free Groq API key (2 min setup) |
+| 📁 **Resume Upload** | PDF/TXT recommended; DOC/DOCX support is best-effort |
+| 🔒 **Privacy-Conscious** | Resume content goes directly to your selected AI provider; preferences and history stay in your browser |
+| 🆓 **Forever Free** | Uses your own Groq or Mistral API key (2 min setup) |
 
 ---
 
@@ -137,7 +137,7 @@ Then: right-click `index.html` → **Open with Live Server**
 | Vanilla JS (ES Modules) | No framework overhead, no build step, instant local dev |
 | CSS Custom Properties | Full design token system, dark mode support |
 | PDF.js (CDN) | Client-side PDF text extraction |
-| Groq API + Llama 3.3 70B | AI inference (~2s response time) |
+| Groq API + GPT OSS 120B | AI inference (~2s response time) |
 | Vercel | Zero-config static deployment |
 | Cloudflare Workers + D1 | Anonymous global stats counter — free tier, zero PII, never pauses |
 
@@ -145,10 +145,11 @@ Then: right-click `index.html` → **Open with Live Server**
 
 ## 🔒 Security & Privacy Model
 
-- **BYOK (Bring Your Own Key):** Your Groq API key is stored only in your browser's localStorage, Base64-encoded. Never transmitted to any server other than Groq directly.
+- **BYOK (Bring Your Own Key):** Your Groq or Mistral API key is stored in your browser's localStorage, Base64-encoded, and sent directly to the selected provider for analysis.
 - **Sanitization Gate:** All user inputs pass through `src/utils/sanitize.js` before any processing. All AI output is HTML-escaped before rendering.
-- **No PII on server:** The only backend (Cloudflare Worker) stores zero PII — only anonymous counts and role/model names. No resume text, no API keys, no IP addresses ever touch the Worker database.
-- **Circuit Breaker:** If Groq API fails 3 times in 60s, requests are blocked for 30s — the app stays fully functional.
+- **Anonymous product stats:** The Cloudflare Worker stores tool, role, model, and timestamp for aggregate activity. Resume text and API keys are not stored in its database. Cloudflare may process IP addresses briefly for rate limiting.
+- **Browser storage:** API settings, score history, and interview history are saved locally so they remain available on the same browser.
+- **Circuit Breaker:** If an AI provider fails 5 times in 60s, requests to that provider are blocked for 15s.
 
 ---
 

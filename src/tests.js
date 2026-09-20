@@ -191,18 +191,18 @@ function testProviderStorage() {
   assert("getModel returns non-empty default", defaultModel.length > 0);
 
   // setModel / getModel round-trip
-  setModel("llama-3.1-8b-instant");
-  assertEqual("setModel + getModel round-trip", getModel(), "llama-3.1-8b-instant");
+  setModel("openai/gpt-oss-20b");
+  assertEqual("setModel + getModel round-trip", getModel(), "openai/gpt-oss-20b");
 
   // Cross-provider bleed prevention — saved Groq model should NOT
-  // be returned when provider is switched to OpenAI
-  setProvider("openai");
+  // be returned when provider is switched to Mistral
+  setProvider("mistral");
   const modelAfterSwitch = getModel();
   assert(
-    "Cross-provider bleed: groq model not returned for openai",
-    modelAfterSwitch !== "llama-3.1-8b-instant"
+    "Cross-provider bleed: groq model not returned for mistral",
+    modelAfterSwitch !== "openai/gpt-oss-20b"
   );
-  assert("OpenAI default model returned instead", modelAfterSwitch.length > 0);
+  assert("Mistral default model returned instead", modelAfterSwitch.length > 0);
 
   // Cleanup
   localStorage.removeItem("cc_provider");

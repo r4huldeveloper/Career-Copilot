@@ -194,6 +194,12 @@
   margin-bottom: var(--space-10);
 }
 
+.hero__cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 .hero__eyebrow {
   display: inline-flex;
   align-items: center;

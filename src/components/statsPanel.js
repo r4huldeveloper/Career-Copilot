@@ -46,6 +46,14 @@ const MODEL_COLORS = {
 };
 function getMC(m) { return MODEL_COLORS[m] || '#888780'; }
 
+const MODEL_LABELS = {
+  "openai/gpt-oss-120b": "Groq",
+  "openai/gpt-oss-20b": "Groq",
+  "mistral-small-latest": "Mistral Small",
+  "mistral-medium-latest": "Mistral Medium",
+  "mistral-large-latest": "Mistral Large",
+};
+
 const TOOL_LABELS = {
   resume   : 'Resume analyzed',
   jd       : 'JD matched',
@@ -245,7 +253,7 @@ export async function trackEvent(tool, role, model) {
     await fetch(`${WORKER_URL}/track`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ tool, role, model }),
+      body:JSON.stringify({ tool, role, model:MODEL_LABELS[model] || 'Groq' }),
       signal:AbortSignal.timeout(3000),
     });
   } catch { /* silent */ }

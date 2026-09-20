@@ -1553,6 +1553,25 @@
   border-color: var(--color-purple-border);
 }
 
+/* Model retired by the provider or not on this key's plan */
+.model-chip--unavailable {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.model-chip--unavailable:hover {
+  border-color: var(--color-border);
+  box-shadow: none;
+  transform: none;
+}
+
+.model-chip--unavailable .model-chip__tag {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .model-grid {

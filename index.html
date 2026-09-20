@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Career Copilot — For Indian Freshers</title>
   <meta name="description"
-    content="AI-powered resume analyzer, JD matcher & mock interview for Indian PM, BA, SDE, Data Science, SEO freshers. 100% free & private." >
+    content="Free AI-powered resume analyzer, JD matcher & mock interview for Indian PM, BA, SDE, Data Science and SEO freshers. Bring your own AI key." >
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
   <!-- Fonts -->
@@ -110,7 +110,7 @@
 
         <!-- Hero — full width -->
         <div class="hero">
-          <div class="hero__eyebrow">✦ Free · Private · AI-Powered</div>
+          <div class="hero__eyebrow">✦ Free · BYOK · AI-Powered</div>
           <h1 class="hero__title">
             Your <span class="hero__title-gradient">Career Copilot</span><br>
             for Every Role
@@ -119,6 +119,19 @@
             Resume analyze karo, JD match karo, aur real mock interview practice karo. PM, BA, SDE, Data Science, SEO —
             sab ke liye. Free — powered by Groq AI.
           </p>
+          <div class="mt-5">
+            <div class="hero__cta-row">
+              <button type="button" class="btn btn--primary" id="hero-resume-cta" data-panel="resume">
+                📄 Analyze My Resume
+              </button>
+              <button type="button" class="btn btn--secondary rst-alt-btn" id="hero-roast-cta" data-panel="resume">
+                🔥 Roast My Resume
+              </button>
+            </div>
+            <p class="u-text-muted u-text-sm mt-2">
+              Analysis ke liye apni free Groq ya Mistral API key connect karni hogi.
+            </p>
+          </div>
           <div class="hero__stats">
             <div class="hero__stat">
               <div class="hero__stat-num">3</div>
@@ -133,8 +146,8 @@
               <div class="hero__stat-lbl">Response Time</div>
             </div>
             <div class="hero__stat">
-              <div class="hero__stat-num">100%</div>
-              <div class="hero__stat-lbl">Private</div>
+              <div class="hero__stat-num">BYOK</div>
+              <div class="hero__stat-lbl">Your API Key</div>
             </div>
           </div>
         </div>
@@ -171,9 +184,9 @@
           <div class="card">
             <div class="card__body">
               <div class="feature-card__icon">🔒</div>
-              <div class="card__title feature-card__title">100% Private</div>
-              <p class="feature-card__desc">Tera data kisi server pe save nahi hota. Sirf browser mein.</p>
-              <div class="feature-card__tag"><span class="tag tag--green">Zero Data Storage</span></div>
+              <div class="card__title feature-card__title">Privacy First</div>
+              <p class="feature-card__desc">Resume chosen AI provider ko analysis ke liye jata hai. Key aur history is browser mein save hoti hai.</p>
+              <div class="feature-card__tag"><span class="tag tag--green">No Resume Storage on Our Server</span></div>
             </div>
           </div>
         </div>
@@ -256,9 +269,9 @@
                   <label class="field__label">Resume Upload</label>
                   <div class="drop-zone" id="resume-drop-zone">
                     <div class="drop-zone__icon">📄</div>
-                    <div class="drop-zone__title">PDF ya DOC upload karo</div>
+                    <div class="drop-zone__title">PDF ya TXT upload karo</div>
                     <div class="drop-zone__sub">
-                      Click karo ya drag &amp; drop — PDF, DOC, DOCX, TXT
+                      PDF/TXT recommended · DOC/DOCX best effort · max 5 MB
                     </div>
                     <input class="d-none" type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.txt">
                   </div>
@@ -292,8 +305,8 @@
                 <div class="loading-bar mt-3" id="role-fit-progress">
                   <div class="loading-bar__fill" id="role-fit-bar"></div>
                 </div>
-                <!-- Roast button — hidden until first analysis completes -->
-                <div id="roast-trigger-row" class="hidden">
+                <!-- Roast is its own entry point — no analysis required first -->
+                <div id="roast-trigger-row">
                   <button type="button" class="rst-trigger-btn" id="roast-btn">
                     🔥 Roast My Resume
                   </button>
@@ -310,7 +323,14 @@
             <span class="result-box__title" id="result-box-title">📊 Analysis Results</span>
             <span class="tag tag--green" id="result-box-tag">Complete</span>
           </div>
-          <div class="result-box__body" id="resume-result-content"></div>
+          <div class="result-box__body">
+            <div id="resume-result-content"></div>
+            <div class="mt-5">
+              <button type="button" class="btn btn--primary" id="resume-next-jd" data-panel="jd">
+                🎯 Next: Match This Resume to a Job
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="result-box hidden mt-4" id="role-fit-result">
@@ -349,8 +369,8 @@
                     <div class="drop-zone__icon u-icon-md">
                       📄
                     </div>
-                    <div class="drop-zone__title">PDF ya DOC upload karo</div>
-                    <div class="drop-zone__sub">Click ya drag &amp; drop</div>
+                    <div class="drop-zone__title">PDF ya TXT upload karo</div>
+                    <div class="drop-zone__sub">DOC/DOCX best effort · max 5 MB</div>
                     <input class="d-none" type="file" id="jd-file-input" accept=".pdf,.doc,.docx,.txt">
                   </div>
                   <span id="jd-file-name" class="hidden u-inline-error-text"></span>
@@ -534,7 +554,7 @@
       <section class="panel" id="panel-apikey">
         <div class="page-header">
           <h2 class="page-title">API &amp; Provider</h2>
-          <p class="page-desc">Apna AI provider choose karo aur API key add karo. Key sirf tumhare browser mein rehti hai.</p>
+          <p class="page-desc">Apna AI provider choose karo aur API key add karo. Key browser mein save hoti hai aur analysis ke liye selected provider ko bheji jaati hai.</p>
         </div>
 
         <div class="apikey-page">

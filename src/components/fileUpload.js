@@ -11,9 +11,10 @@ import { extractText } from '../utils/pdfParser.js';
  * @param {string}   config.zoneId      - Drop zone element ID
  * @param {string}   config.inputId     - Hidden file input ID
  * @param {string}   config.fileNameId  - Element to show filename
+ * @param {function} config.onStart     - Optional callback before extraction
  * @param {function} config.onExtract   - Callback(text, error)
  */
-export function initDropZone({ zoneId, inputId, fileNameId, onExtract }) {
+export function initDropZone({ zoneId, inputId, fileNameId, onStart = () => {}, onExtract }) {
   const zone      = document.getElementById(zoneId);
   const input     = document.getElementById(inputId);
   const nameEl    = document.getElementById(fileNameId);
@@ -47,6 +48,8 @@ export function initDropZone({ zoneId, inputId, fileNameId, onExtract }) {
   });
 
   async function processFile(file) {
+    onStart();
+
     // Show loading state
     setZoneState(zone, 'loading', file.name);
 

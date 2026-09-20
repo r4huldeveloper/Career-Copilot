@@ -37,7 +37,7 @@ _migrateV02Key();
 const KEYS = {
   API_KEY:  "cc_api_key",      // encoded API key (provider-agnostic)
   PROVIDER: "cc_provider",     // selected provider id e.g. "groq"
-  MODEL:    "cc_model",        // selected model id e.g. "llama-3.3-70b-versatile"
+  MODEL:    "cc_model",        // selected model id e.g. "openai/gpt-oss-120b"
   HISTORY:  "cc_interview_history",
   SCORES:   "cc_ats_scores",
   THEME:    "theme",

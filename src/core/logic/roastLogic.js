@@ -57,12 +57,12 @@ export async function runRoastAnalysis({ resumeText, targetRole, apiKey }) {
   // Graceful fallback if parser gets nothing
   if (parsed.lines.length === 0) {
     parsed.lines = [
-      'Yaar, tera resume itna generic hai ki ATS ne socha "yeh toh template hai" aur skip kar diya.',
-      'Skills mein "Team Player, Hardworking" likha hai — bhai, sab likhte hain. Alag kya hai tujh mein?',
-      'Projects mein sirf tech stack hai, result kuch nahi. Tu kiya kya actually?',
+      '"Team player, hardworking" — bhai yeh skills nahi, copium hai. ATS bhi skip maar ke so raha hai.',
+      'Projects mein sirf stack likha, result zero. Code kiya ya README copy-paste kiya, pata nahi.',
+      'Bullets itne sookhe hain ki hiring manager sochta hai: yeh intern hai ya template download kiya.',
     ];
-    parsed.hopeL = 'Par seriously — tu yahan hai, improve karna chahta hai. Yahi baat tujhe baaki se alag karti hai!';
-    parsed.title = 'The Resume That Could Be So Much More';
+    parsed.hopeL = 'Has le — ab bullets mein number daal, phir roast kam padega.';
+    parsed.title = 'Template Resume, Zero Proof';
   }
 
   return { ...parsed, raw };

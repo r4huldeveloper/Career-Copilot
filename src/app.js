@@ -32,6 +32,7 @@ import {
 }                                           from "./utils/storage.js";
 import { parseMarkdown }                    from "./utils/markdown.js";
 import { sanitizeUserText }                 from "./utils/sanitize.js";
+import { trackFunnelEvent }                 from "./utils/analytics.js";
 import { startProgress, setProgressStep }   from "./components/progressBar.js";
 import { initDropZone }                     from "./components/fileUpload.js";
 import { initProviderPage }                 from "./components/providerPage.js";
@@ -162,6 +163,7 @@ function initApiSettingsPage() {
       state.model    = modelId;
       resetBreaker(providerId);
       updateConnectionStatus(true);
+      trackFunnelEvent("api_key_saved", { provider: providerId, model: modelId });
     },
     onDisconnect() {
       clearApiKey();
@@ -169,6 +171,43 @@ function initApiSettingsPage() {
       updateConnectionStatus(false);
     },
   });
+}
+
+function ensureAIReady(tool) {
+  const providerId = getProvider();
+  const provider   = CONFIG.PROVIDERS[providerId];
+  const modelId    = getModel();
+  const validModel = provider?.models?.some((model) => model.id === modelId);
+
+  if (state.apiKey && provider && validModel) return true;
+
+  trackFunnelEvent("analysis_blocked", {
+    tool,
+    reason: !state.apiKey ? "missing_key" : "invalid_configuration",
+  });
+  showPanel("apikey");
+  initApiSettingsPage();
+
+  const errorEl = $("provider-key-error");
+  if (errorEl) {
+    errorEl.textContent = !state.apiKey
+      ? "Analysis se pehle API key connect karo. Tumhara entered data safe rahega."
+      : "Valid AI model select karke Save & Connect karo.";
+    errorEl.classList.remove("hidden");
+  }
+  $("provider-key-input")?.focus();
+  return false;
+}
+
+function analysisErrorCategory(error) {
+  const message = String(error?.message || "").toLowerCase();
+  if (message.includes("resume") || message.includes("answer") || message.includes("description")) return "validation";
+  if (message.includes("api key") || message.includes("401") || message.includes("403")) return "authentication";
+  if (message.includes("rate limit") || message.includes("429")) return "rate_limit";
+  if (message.includes("connection") || message.includes("network")) return "network";
+  if (message.includes("bad request") || message.includes("400")) return "bad_request";
+  if (message.includes("service") || message.includes("503")) return "provider_unavailable";
+  return "unknown";
 }
 
 // Offline Banner
@@ -223,9 +262,15 @@ function closeSidebar(sidebar, overlay) {
 // Feature Handlers — thin UI bridges to Pure Logic Layer
 
 async function handleAnalyzeResume() {
+  if (!ensureAIReady("resume")) return;
+
   const rawText = state.resumeText || $v("resume-text");
   const role    = sanitizeUserText($v("resume-role"));
 
+  trackFunnelEvent("analysis_started", {
+    tool: "resume",
+    input: state.resumeText ? "upload" : "paste",
+  });
   setBtn("resume-btn", true, "Analyzing...");
   setProgressStep(["rs-1", "rs-2", "rs-3", "rs-4"], 2);
   const stop = startProgress("resume-bar", "resume-progress", 3000);
@@ -243,16 +288,19 @@ async function handleAnalyzeResume() {
     $("role-fit-result")?.classList.add("hidden");
     $("role-fit-result")?.classList.remove("result-box--visible");
     showResult("resume-result", "resume-result-content", parseMarkdown(result));
+    trackFunnelEvent("analysis_completed", { tool: "resume" });
+    trackFunnelEvent("result_viewed", { tool: "resume" });
     renderScoreTracker($("score-tracker-list"));
     initStatsPanel();
     trackEvent('resume', sanitizeUserText($v("resume-role")), getModel());
-    // Reveal roast button after analysis
-    const roastRow = $("roast-trigger-row");
-    if (roastRow) { roastRow.style.display = "block"; roastRow.classList.remove("hidden"); }
 
   } catch (err) {
     stop();
     console.error("[app] handleAnalyzeResume:", err.message);
+    trackFunnelEvent("analysis_failed", {
+      tool: "resume",
+      reason: analysisErrorCategory(err),
+    });
     showError("resume-error", err.message);
   }
 
@@ -260,6 +308,8 @@ async function handleAnalyzeResume() {
 }
 
 async function handleAnalyzeRoleFit() {
+  if (!ensureAIReady("role_fit")) return;
+
   const rawText = state.resumeText || $v("resume-text");
 
   setBtn("role-fit-btn", true, "Finding Best Roles...");
@@ -287,6 +337,8 @@ async function handleAnalyzeRoleFit() {
 }
 
 async function handleRoastResume() {
+  if (!ensureAIReady("roast")) return;
+
   const rawText = state.resumeText || $v("resume-text");
   const role    = sanitizeUserText($v("resume-role"));
 
@@ -310,6 +362,8 @@ async function handleRoastResume() {
 }
 
 async function handleMatchJD() {
+  if (!ensureAIReady("jd")) return;
+
   const jdText     = $v("jd-text");
   const resumeText = state.jdResumeText || $v("jd-resume-text");
 
@@ -331,6 +385,8 @@ async function handleMatchJD() {
 }
 
 async function handleGenerateQuestion(forceNew = false) {
+  if (!ensureAIReady("interview_question")) return;
+
   const role = $v("int-role");
   const type = $v("int-type");
 
@@ -364,6 +420,8 @@ async function handleGenerateQuestion(forceNew = false) {
 }
 
 async function handleGetFeedback() {
+  if (!ensureAIReady("interview_feedback")) return;
+
   const answer = $v("user-answer");
   const role   = $v("int-role");
   const type   = $v("int-type");
@@ -393,6 +451,8 @@ async function handleGetFeedback() {
 }
 
 async function handleGetTips() {
+  if (!ensureAIReady("interview_tips")) return;
+
   const role = $v("int-role");
   const type = $v("int-type");
 
@@ -426,21 +486,33 @@ function init() {
   document.querySelectorAll("[data-panel]").forEach((el) =>
     el.addEventListener("click", () => {
       showPanel(el.dataset.panel);
-      if (el.dataset.panel === "apikey") initApiSettingsPage();
+      trackFunnelEvent("tool_opened", { tool: el.dataset.panel });
+      if (el.dataset.panel === "apikey") {
+        initApiSettingsPage();
+      }
     })
   );
 
   // data-action="show-setup" → go to API & Provider page
   document.querySelectorAll('[data-action="show-setup"]').forEach((el) =>
     el.addEventListener("click", () => {
+      trackFunnelEvent("api_settings_opened", { source: "setup_action" });
       showPanel("apikey");
       initApiSettingsPage();
     })
   );
 
   // Topbar status click → API & Provider page
-  $("api-status")?.addEventListener("click", () => { showPanel("apikey"); initApiSettingsPage(); });
-  $("api-dot")?.addEventListener("click",    () => { showPanel("apikey"); initApiSettingsPage(); });
+  $("api-status")?.addEventListener("click", () => {
+    trackFunnelEvent("api_settings_opened", { source: "status" });
+    showPanel("apikey");
+    initApiSettingsPage();
+  });
+  $("api-dot")?.addEventListener("click", () => {
+    trackFunnelEvent("api_settings_opened", { source: "status" });
+    showPanel("apikey");
+    initApiSettingsPage();
+  });
 
   // Feature buttons
   $("resume-btn")?.addEventListener("click", handleAnalyzeResume);
@@ -452,8 +524,47 @@ function init() {
   $("feedback-btn")?.addEventListener("click", handleGetFeedback);
   $("tips-btn")?.addEventListener("click", handleGetTips);
 
-  initDropZone({ zoneId: "resume-drop-zone", inputId: "resume-file-input", fileNameId: "resume-file-name", onExtract: (text) => { state.resumeText = text; } });
-  initDropZone({ zoneId: "jd-drop-zone",     inputId: "jd-file-input",     fileNameId: "jd-file-name",     onExtract: (text) => { state.jdResumeText = text; } });
+  initDropZone({
+    zoneId: "resume-drop-zone",
+    inputId: "resume-file-input",
+    fileNameId: "resume-file-name",
+    onStart: () => trackFunnelEvent("resume_upload_started"),
+    onExtract: (text, error) => {
+      if (!text) {
+        trackFunnelEvent("resume_upload_failed", {
+          reason: error?.includes("MB") ? "file_size" : "extraction",
+        });
+        return;
+      }
+      state.resumeText = text;
+      if ($("resume-text")) $("resume-text").value = text;
+      trackFunnelEvent("resume_uploaded");
+    },
+  });
+  initDropZone({
+    zoneId: "jd-drop-zone",
+    inputId: "jd-file-input",
+    fileNameId: "jd-file-name",
+    onExtract: (text) => {
+      if (!text) return;
+      state.jdResumeText = text;
+      if ($("jd-resume-text")) $("jd-resume-text").value = text;
+    },
+  });
+  $("resume-text")?.addEventListener("input", () => { state.resumeText = ""; });
+  $("jd-resume-text")?.addEventListener("input", () => { state.jdResumeText = ""; });
+  $("resume-role")?.addEventListener("change", () => {
+    trackFunnelEvent("role_selected", { role: $v("resume-role") });
+  });
+  $("hero-resume-cta")?.addEventListener("click", () => {
+    trackFunnelEvent("primary_cta_clicked", { destination: "resume" });
+  });
+  $("hero-roast-cta")?.addEventListener("click", () => {
+    trackFunnelEvent("primary_cta_clicked", { destination: "roast" });
+  });
+  $("resume-next-jd")?.addEventListener("click", () => {
+    trackFunnelEvent("next_action_clicked", { from: "resume", destination: "jd" });
+  });
 
   $("clear-history-btn")?.addEventListener("click", () => { clearHistory(); renderHistoryList($("history-list")); });
   $("clear-scores-btn")?.addEventListener("click",  () => { clearScores();  renderScoreTracker($("score-tracker-list")); });
@@ -485,6 +596,7 @@ function init() {
 
   initOfflineDetection();
   initFeedbackWidget();
+  trackFunnelEvent("page_view", { page: "home" });
 
   // New user (no API key) → show a subtle banner, NOT force redirect.
   // User lands on Home first — if they want to connect, sidebar "API & Models" is right there.

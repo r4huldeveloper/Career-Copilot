@@ -119,7 +119,7 @@ function _sanitize(text) {
 
 // ── OpenAI-compatible call (Groq, OpenAI, Mistral) ────────────────────────────
 
-async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt, isGemini, providerId }) {
+async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt, isGemini, providerId, temperature }) {
   const messages = [];
 
   // Both Groq/OpenAI/Mistral AND Gemini support system role in OpenAI-compat mode
@@ -132,7 +132,7 @@ async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt, 
     model,
     messages,
     max_tokens:  CONFIG.AI_MAX_TOKENS,
-    temperature: CONFIG.AI_TEMPERATURE,
+    temperature: temperature ?? CONFIG.AI_TEMPERATURE,
   };
 
   let res;
@@ -184,7 +184,7 @@ async function _callOpenAI({ endpoint, model, apiKey, systemPrompt, userPrompt, 
 // Gemini uses Google's /v1beta/openai/ endpoint — same request/response as OpenAI.
 // Adding a new provider: add to CONFIG.PROVIDERS in config.js. If apiFormat="openai" → works automatically.
 
-async function _call({ systemPrompt, userPrompt, apiKey }) {
+async function _call({ systemPrompt, userPrompt, apiKey, temperature }) {
   const providerId = getProvider();
   _breakerCheck(providerId);
   const modelId    = getModel();
@@ -201,9 +201,46 @@ async function _call({ systemPrompt, userPrompt, apiKey }) {
     userPrompt,
     isGemini:     providerId === "gemini",
     providerId,
+    temperature,
   };
 
   return _callOpenAI(params);
+}
+
+// ── Live Model Catalog ────────────────────────────────────────────────────────
+// Providers retire models (Groq killed the Llama IDs, Mistral retired Mixtral).
+// A hardcoded list rots and users hit 400/404 on their first analysis, so ask the
+// provider what this key can actually call. OpenAI-compatible GET /models.
+
+/** @param {string} chatEndpoint @returns {string} */
+function _modelsEndpoint(chatEndpoint) {
+  return chatEndpoint.replace(/\/chat\/completions\/?$/, "/models");
+}
+
+/**
+ * List model ids the given key can actually use.
+ * @param {string} apiKey
+ * @param {string} [providerId]
+ * @returns {Promise<string[]>}
+ * @throws {Error} on invalid key or unreachable provider
+ */
+export async function fetchAvailableModels(apiKey, providerId = getProvider()) {
+  const provider = CONFIG.PROVIDERS[providerId];
+  if (!provider) throw new Error(`Unknown provider: ${providerId}`);
+  if (!apiKey)   throw new Error("API key missing — Settings mein jaake key add karo");
+
+  const res = await fetch(_modelsEndpoint(provider.endpoint), {
+    headers: { "Authorization": `Bearer ${apiKey}` },
+    signal:  AbortSignal.timeout(8000),
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("Invalid API key — provider dashboard se verify karo");
+  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+  const data = await res.json();
+  return (data?.data || []).map((m) => m?.id).filter(Boolean);
 }
 
 // ── Public Adapter Class ──────────────────────────────────────────────────────
@@ -288,8 +325,9 @@ export class GroqAdapter {
     // No cache — roast should feel fresh every time
     return _call({
       systemPrompt: roastSystemPrompt(targetRole),
-      userPrompt:   `Target Role: ${targetRole}\n\nResume:\n${resumeText.slice(0, CONFIG.MAX_RESUME_LENGTH)}`,
+      userPrompt:   `Target Role: ${targetRole}\n\nResume:\n${resumeText.slice(0, CONFIG.MAX_RESUME_LENGTH)}\n\nIs resume ko phaad. Generic bakwas mat de. Har line pe actual quote + punch.`,
       apiKey:       this.apiKey,
+      temperature:  CONFIG.AI_ROAST_TEMPERATURE,
     });
   }
 }

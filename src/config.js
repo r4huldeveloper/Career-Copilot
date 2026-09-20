@@ -21,25 +21,19 @@ export const CONFIG = {
       apiFormat:   "openai",
       models: [
         {
-          id: "llama-3.3-70b-versatile",
-          name: "Llama 3.3 70B",
+          id: "openai/gpt-oss-120b",
+          name: "GPT OSS 120B",
           context: "128K",
           tags: ["Recommended", "Best Quality"],
         },
         {
-          id: "openai/gpt-oss-120b",
-          name: "GPT OSS 120B",
+          id: "openai/gpt-oss-20b",
+          name: "GPT OSS 20B",
           context: "128K",
-          tags: ["High Accuracy", "OSS"],
-        },
-        {
-          id: "llama-3.1-8b-instant",
-          name: "Llama 3.1 8B",
-          context: "8K",
-          tags: ["Fast"],
+          tags: ["Fast", "OSS"],
         },
       ],
-      defaultModel: "gpt-oss-120b",
+      defaultModel: "openai/gpt-oss-120b",
     },
 
     mistral: {
@@ -57,26 +51,20 @@ export const CONFIG = {
         {
           id: "mistral-small-latest",
           name: "Mistral Small",
-          context: "32K",
+          context: "256K",
           tags: ["Free", "Fast"],
-        },
-        {
-          id: "open-mixtral-8x7b",
-          name: "Mixtral 8x7B",
-          context: "32K",
-          tags: ["Free", "Balanced"],
-        },
-        {
-          id: "mistral-medium-latest",
-          name: "Mistral Medium",
-          context: "32K",
-          tags: ["Premium"],
         },
         {
           id: "mistral-large-latest",
           name: "Mistral Large",
-          context: "128K",
+          context: "256K",
           tags: ["Premium", "Best Quality"],
+        },
+        {
+          id: "mistral-medium-latest",
+          name: "Mistral Medium",
+          context: "256K",
+          tags: ["Premium"],
         },
       ],
       defaultModel: "mistral-small-latest",
@@ -88,6 +76,7 @@ export const CONFIG = {
 
   AI_MAX_TOKENS:   6000,
   AI_TEMPERATURE:  0.7,
+  AI_ROAST_TEMPERATURE: 1.0,
 
   WEB3FORMS_URL: "https://api.web3forms.com/submit",
   WEB3FORMS_KEY: "44523102-ccbe-4318-b3f5-46e8268173c8",

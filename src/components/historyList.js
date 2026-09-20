@@ -21,6 +21,25 @@ function _escape(str) {
     .replace(/'/g, "&#039;");
 }
 
+const ALLOWED_FEEDBACK_TAGS = new Set([
+  "H2", "H3", "P", "STRONG", "CODE", "UL", "LI", "BR",
+]);
+
+function _sanitizeFeedback(html) {
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
+
+  template.content.querySelectorAll("*").forEach((node) => {
+    if (!ALLOWED_FEEDBACK_TAGS.has(node.tagName)) {
+      node.replaceWith(document.createTextNode(node.textContent || ""));
+      return;
+    }
+    [...node.attributes].forEach((attribute) => node.removeAttribute(attribute.name));
+  });
+
+  return template.innerHTML;
+}
+
 /**
  * Render interview history into the given container element
  * Each item is keyboard-accessible and toggles details on click
@@ -68,7 +87,7 @@ export function renderHistoryList(container) {
         </p>
         <div class="history-item__detail-row">
           <strong>Feedback:</strong>
-          <div class="prose">${s.feedback}</div>
+          <div class="prose">${_sanitizeFeedback(s.feedback)}</div>
         </div>
       </div>
     </div>

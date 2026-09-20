@@ -104,6 +104,14 @@ function extractFromDOC(file) {
  */
 export async function extractText(file) {
   const name = file.name.toLowerCase();
+  const maxBytes = CONFIG.MAX_FILE_SIZE_MB * 1024 * 1024;
+
+  if (file.size > maxBytes) {
+    return {
+      text: "",
+      error: `File ${CONFIG.MAX_FILE_SIZE_MB} MB se chhoti honi chahiye. Chhoti PDF/TXT use karo ya text paste karo.`,
+    };
+  }
 
   try {
     let text = "";
