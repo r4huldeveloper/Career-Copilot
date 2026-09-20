@@ -404,10 +404,6 @@
     display: none;
   }
 
-  .topbar__github {
-    display: none;
-  }
-
   /* Progress steps scroll horizontally */
   .progress-steps {
     overflow-x: auto;
